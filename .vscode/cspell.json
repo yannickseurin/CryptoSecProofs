@@ -1,0 +1,37 @@
+{
+    "languageSettings": [
+        {
+            "languageId": "lean4",
+            "includeRegExpList": [
+                "--.*",                // single-line comments (-- ...)
+                "//-[\\s\\S]*?-//",    // block comments (/- ... -/,
+                                       // including /-- ... -/ and /-! ... -/)
+            ],
+            "ignoreRegExpList": [
+                "`[^`]*`",             // words in single backticks
+            ]
+        }
+    ],   
+    
+    "words": [
+        "Bellare",
+        "bijective",
+        "CDH",
+        "ciphertext",
+        "ciphertexts",
+        "codomain",
+        "DDH",
+        "Diffie",
+        "distinguisher",
+        "distinguishers",
+        "ElGamal",
+        "Finset",
+        "iff",
+        "Mathlib",
+        "PKE",
+        "PMF",
+        "pointwise",
+        "Seurin",
+        "Yannick"
+    ]
+}
