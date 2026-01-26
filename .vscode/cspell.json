@@ -26,6 +26,7 @@
         "distinguishers",
         "ElGamal",
         "Finset",
+        "indistinguishability",
         "iff",
         "Mathlib",
         "PKE",
