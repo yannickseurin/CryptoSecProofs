@@ -14,6 +14,36 @@ See https://leanprover.zulipchat.com/#narrow/channel/113489-new-members/topic/in
 instance {α : Type u} [Finite α] [Nonempty α] : NeZero (Nat.card α) where
   out := Nat.card_ne_zero.mpr ⟨inferInstance, inferInstance⟩
 
+section Order
+
+lemma max_zero_sub_ite {α : Type*}
+    [AddCommGroup α] [LinearOrder α] [IsOrderedAddMonoid α]
+    (a b : α) :
+    max 0 (a - b) = if b < a then a - b else 0 := by
+    by_cases h : b < a
+    · have : 0 ≤ a - b := sub_nonneg.mpr (le_of_lt h)
+      simp [h, max_eq_right this]
+    · have : a - b ≤ 0 := sub_nonpos.mpr (le_of_not_gt h)
+      simp [h, max_eq_left this]
+
+lemma sub_min_ite {α : Type*}
+    [AddCommGroup α] [LinearOrder α] [IsOrderedAddMonoid α]
+    (a b : α) :
+     a - min a b = if b < a then a - b else 0 := by
+    by_cases h : b < a
+    · have : b ≤ a := le_of_lt h
+      simp [h, min_eq_right this]
+    · have : a ≤ b := not_lt.mp h
+      simp [h, min_eq_left this]
+
+lemma max_zero_sub_eq_sub_min {α : Type*}
+    [AddCommGroup α] [LinearOrder α] [IsOrderedAddMonoid α]
+    (a b : α) :
+    max 0 (a - b) = a - min a b :=
+  Eq.trans (max_zero_sub_ite a b) (sub_min_ite a b).symm
+
+end Order
+
 section List
 
 lemma List.eraseDups_length_le_aux
@@ -44,6 +74,11 @@ lemma List.eraseDups_length_le
     l.eraseDups.length ≤ l.length := by
   exact List.eraseDups_length_le_aux l (by linarith)
 
+lemma List.dedup_length_le
+    [DecidableEq α] (l : List α) :
+    l.dedup.length ≤ l.length := by
+  simp [List.dedup_sublist, List.Sublist.length_le]
+
 end List
 
 section Vector
@@ -73,6 +108,20 @@ instance Vector.fintype' [Fintype α] :
   Fintype.ofEquiv (List.Vector α n) equivVector
 
 end Vector
+
+section FinsetSum
+
+theorem Finset.sum_mem_add_sum_compl
+    {ι : Type*} {M : Type*}
+    [AddCommMonoid M] [DecidableEq ι] [Fintype ι]
+    (s : Finset ι) (f : ι → M) :
+    ∑ i : ι, f i = ∑ i ∈ s, f i + ∑ i ∈ sᶜ, f i := by
+  rw [← Finset.sum_ite_mem_eq s f, ← Finset.sum_ite_mem_eq sᶜ f,
+    ← Finset.sum_filter (· ∈ s), ← Finset.sum_filter (· ∈ sᶜ)]
+  simp_rw [mem_compl]
+  rw [Finset.sum_filter_add_sum_filter_not]
+
+end FinsetSum
 
 section Bijection
 
@@ -129,7 +178,7 @@ theorem Function.bijective_nfold (n : ℕ) (hf : Function.Bijective f) :
         simp only [nfoldProd, nfoldMap, Prod.forall, Prod.mk.injEq] at *
         intro b bs
         specialize ih bs
-        have hb : ∃! a, f a = b := by exact Function.Bijective.existsUnique hf b
+        have hb : ∃! a, f a = b := Function.Bijective.existsUnique hf b
         simp only [ExistsUnique, and_imp, Prod.forall, Prod.exists, Prod.mk.injEq]
         rcases hb with ⟨a, ha, ha'⟩
         rcases ih with ⟨as, has, has'⟩
