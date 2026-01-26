@@ -278,10 +278,10 @@ theorem pw_negl_of_unif_negl (F : fun_fam I) (hF : unif_negligible F) :
 
 variable [Countable I] [Nonempty I]
 
-open scoped Classical in
 /-- Pointwise negligibility implies uniform negligibility. -/
 theorem unif_negl_of_pw_negl (F : fun_fam I) (hF : pw_negligible F) :
     unif_negligible F := by
+  classical
   simp only [pw_negligible, negligible, one_div] at hF
   -- we follow Bellare's proof very closely
   -- We define function `N i c` such that
