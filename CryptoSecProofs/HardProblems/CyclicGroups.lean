@@ -130,7 +130,6 @@ def ddhRandomPMF (g : G) : PMF (G^3) := do
   let z ← uniformZMod #G
   PMF.pure (g ^ x.val, g ^ y.val, g ^ z.val)
 
-open scoped Classical in
 /-- If `g` is a generator of `G`, then `ddhRandomPMF`
 is the uniform distribution over `G^3`. -/
 theorem ddhRandomPMF_eq_uniform (g : G) (hg : IsGenerator G g) :
@@ -176,10 +175,10 @@ def ddhGame₁ (adv : ddhAdversary G) : PMF Bool := do
 def ddhAdvantage (adv : ddhAdversary G) : ℝ :=
   |(ddhGame₀ adv true).toReal - (ddhGame₁ adv true).toReal|
 
-open scoped Classical in
 -- the DDH distribution can be expressed explicitly using `IsDdh`
 theorem ddh_dist_ite (g X Y Z : G) (hg : IsGenerator G g) :
     (ddhPMF g) (X, Y, Z) = if IsDdh g X Y Z then (#G : ℝ≥0∞)⁻¹ ^ 2 else 0 := by
+  classical
   simp_rw [ddhPMF, bind_apply', pure_apply, uniform_zmod_prob,
     mul_ite, mul_one, mul_zero, ENNReal.tsum_mul_left, ← ENNReal.tsum_prod]
   by_cases h : IsDdh g X Y Z
@@ -216,7 +215,6 @@ def rerandTuple (g X Y Z : G) : PMF (G^3) := do
   PMF.pure (g ^ u.val * X, g ^ v.val * Y ^ w.val,
     g ^ (u.val * v.val) * X ^ v.val * Y ^ (u.val * w.val) * Z ^ w.val)
 
-open scoped Classical in
 /-- Re-randomizing a DDH tuple yields the DDH distribution. -/
 lemma rerand_eq_ddhPMF_of_isddh (g X Y Z : G) (hg : IsGenerator G g)
     (h : IsDdh g X Y Z) :
@@ -224,6 +222,7 @@ lemma rerand_eq_ddhPMF_of_isddh (g X Y Z : G) (hg : IsGenerator G g)
   /- if `(X, Y, Z) = (g ^ x, g ^ y, g ^ (x * y)`
     then the re-randomized triple is
     `(g ^ (u + x), g ^ (v + y * w), g ^ ((u + x) * (v + y * w))` -/
+  classical
   ext Xs
   simp_rw [rerandTuple, ddhPMF, bind_apply', pure_apply, uniform_zmod_prob,
     mul_ite, mul_one, mul_zero,
@@ -301,7 +300,6 @@ lemma rerand_eq_ddhPMF_of_isddh (g X Y Z : G) (hg : IsGenerator G g)
     Finset.image_univ_of_surjective f'_surj
   simp [this, tsum_fintype]
 
-open scoped Classical in
 /-- Re-randomizing a non-DDH tuple yields the uniform distribution. -/
 lemma rerand_eq_uniform_of_nonddh (g X Y Z : G) (hg : IsGenerator G g)
     (h : ¬(IsDdh g X Y Z)) :
@@ -327,7 +325,6 @@ lemma rerand_eq_uniform_of_nonddh (g X Y Z : G) (hg : IsGenerator G g)
       ← add_mul, ← mul_assoc, add_assoc, ← add_mul]
   sorry
 
-open scoped Classical in
 theorem self_reducible (g X Y Z : G) (hg : IsGenerator G g) :
     rerandTuple g X Y Z = if IsDdh g X Y Z then ddhPMF g else ddhRandomPMF g := by
   by_cases h : IsDdh g X Y Z
