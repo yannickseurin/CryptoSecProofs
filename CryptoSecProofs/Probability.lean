@@ -10,6 +10,30 @@ open ENNReal
 
 namespace PMF
 
+@[simp]
+theorem tsum_toReal {α : Type*} (p : PMF α) :
+    ∑' a : α, (p a).toReal = 1 := by
+  rw [← ENNReal.tsum_toReal_eq (apply_ne_top p)]
+  simp
+
+@[simp]
+theorem sum_toReal {α : Type*} [Fintype α] (p : PMF α) :
+    ∑ a : α, (p a).toReal = 1 := by
+  have : ∑' a : α, (p a).toReal = ∑ a : α, (p a).toReal := by
+    exact tsum_fintype fun a ↦ (p a).toReal
+  rw [← this]
+  simp [-tsum_fintype]
+
+open scoped Classical in
+theorem ite_ne_top {α : Type*} (p : PMF α) (a : α) (P : Prop) :
+    (if P then p a else 0) ≠ ⊤ := by
+  have ite_le : (if P then p a else 0) ≤  p a := by
+    have : p a = max (p a) 0 := (ENNReal.max_zero_right).symm
+    nth_rw 2 [this]
+    apply ite_le_sup (p a) 0 P
+  have : p a ≠ ⊤ := apply_ne_top p a
+  exact ne_top_of_le_ne_top this ite_le
+
 section PMFMonadVariants
 
 universe u
@@ -170,19 +194,18 @@ theorem map_prod_snd (p : PMF α) (b : β) :
     PMF.pure b := by
   simp [map_bind', pure_map]
 
-open scoped Classical in
 theorem apply_eq_zero_of_map_pure_of_ne
     {a : α} {b₀ : β} (p : PMF α) (f : α → β)
     (h : map f p = PMF.pure b₀) (hne : b₀ ≠ f a) :
     p a = 0 := by
+  classical
   have : (∑' (a' : α), if f a = f a' then p a' else 0) = 0 := by
-    simp [← (map_apply f p (f a)), h]
+    simp only [← (map_apply f p (f a)), h, pure_apply, ite_eq_right_iff, one_ne_zero, imp_false]
     tauto
   simp only [ENNReal.tsum_eq_zero, ite_eq_right_iff] at this
   specialize this a
   tauto
 
-open scoped Classical in
 theorem bind_pure_bind
     (p : PMF α) (f : α → β) (g : α → β → PMF γ)
     (h : map f p = PMF.pure b₀) :
@@ -218,17 +241,142 @@ theorem bind_pure_bind
     tsum_setElem_eq_tsum_setElem_diff Set.univ s h₀']
   simp [h₁]
 
-open scoped Classical in
-theorem ite_ne_top {α : Type*} (p : PMF α) (a : α) (P : Prop) :
-    (if P then p a else 0) ≠ ⊤ := by
-  have ite_le : (if P then p a else 0) ≤  p a := by
-    have : p a = max (p a) 0 := (ENNReal.max_zero_right).symm
-    nth_rw 2 [this]
-    apply ite_le_sup (p a) 0 P
-  have : p a ≠ ⊤ := apply_ne_top p a
-  exact ne_top_of_le_ne_top this ite_le
-
 end PMFMonadNew
+
+noncomputable section TVD
+
+def TVD {α : Type*} [Fintype α] (p q : PMF α) :=
+  (∑ a : α, |(p a).toReal - (q a).toReal|) / 2
+
+theorem TVD_self {α : Type*} [Fintype α] (p : PMF α) :
+    TVD p p = 0 := by
+  simp [TVD]
+
+theorem TVD_comm {α : Type*} [Fintype α] (p q : PMF α) :
+    TVD p q = TVD q p := by
+  simp [TVD, abs_sub_comm]
+
+theorem TVD_triangle {α : Type*} [Fintype α] (p q r : PMF α) :
+    TVD p r ≤ TVD p q + TVD q r := by
+  simp only [TVD]
+  calc
+        (∑ a, |(p a).toReal - (r a).toReal|) / 2
+    _ = (∑ a, |(p a).toReal - (q a).toReal + ((q a).toReal - (r a).toReal)|) / 2 := by
+      congr 1
+      apply Finset.sum_congr rfl
+      intro a h
+      congr
+      linarith
+    _ ≤ (∑ a, (|(p a).toReal - (q a).toReal| + |(q a).toReal - (r a).toReal|)) / 2 := by
+      apply (div_le_div_iff_of_pos_right (by norm_num)).mpr
+      apply Finset.sum_le_sum
+      intro a ha
+      exact abs_add_le ((p a).toReal - (q a).toReal) ((q a).toReal - (r a).toReal)
+    _ = (∑ a, |(p a).toReal - (q a).toReal| + ∑ a, |(q a).toReal - (r a).toReal|) / 2 := by
+      apply (div_left_inj' (by norm_num)).mpr
+      exact Finset.sum_add_distrib
+    _ ≤ (∑ a, |(p a).toReal - (q a).toReal|) / 2 + (∑ a, |(q a).toReal - (r a).toReal|) / 2 := by
+      linarith
+    _ = TVD p q + TVD q r := rfl
+
+lemma TVD_eq_sum_subset_aux {α : Type*} [Fintype α] (p : PMF α) (q : PMF α) :
+    ∑ a with ¬(q a).toReal < (p a).toReal, ((q a).toReal - (p a).toReal) =
+      ∑ a with (q a).toReal < (p a).toReal, ((p a).toReal - (q a).toReal) := by
+  apply eq_of_sub_eq_zero
+  repeat rw [Finset.sum_sub_distrib]
+  rw [sub_sub_sub_eq]
+  repeat rw [Finset.sum_filter_not_add_sum_filter]
+  simp
+
+theorem TVD_eq_sum_subset {α : Type*} [Fintype α] (p : PMF α) (q : PMF α) :
+    TVD p q = ∑ a with (q a).toReal < (p a).toReal, ((p a).toReal - (q a).toReal) := by
+  calc
+        TVD p q
+    _ = (∑ a : α, |(p a).toReal - (q a).toReal|) / 2 := rfl
+    _ = (∑ a with (q a).toReal < (p a).toReal, |(p a).toReal - (q a).toReal| +
+          ∑ a with ¬((q a).toReal < (p a).toReal), |(p a).toReal - (q a).toReal|) / 2 := by
+      rw [Finset.sum_filter_add_sum_filter_not]
+    -- remove the absolute value in the first sum
+    _ = (∑ a with (q a).toReal < (p a).toReal, ((p a).toReal - (q a).toReal) +
+          ∑ a with ¬((q a).toReal < (p a).toReal), |(p a).toReal - (q a).toReal|) / 2 := by
+      congr 2
+      apply Finset.sum_congr rfl
+      intro a ha
+      simp only [Finset.mem_filter, Finset.mem_univ, true_and] at ha
+      have hnonneg : 0 ≤ (p a).toReal - (q a).toReal :=
+        sub_nonneg.mpr (le_of_lt ha)
+      simp [abs_of_nonneg hnonneg]
+    -- remove the absolute value in the second sum
+    _ = (∑ a with (q a).toReal < (p a).toReal, ((p a).toReal - (q a).toReal) +
+          ∑ a with ¬((q a).toReal < (p a).toReal), ((q a).toReal - (p a).toReal)) / 2 := by
+      congr 2
+      apply Finset.sum_congr rfl
+      intro a ha
+      simp only [not_lt, Finset.mem_filter, Finset.mem_univ, true_and] at ha
+      rw [abs_sub_comm]
+      have hnonneg : 0 ≤ (q a).toReal - (p a).toReal :=
+        sub_nonneg.mpr ha
+      simp [abs_of_nonneg hnonneg]
+    _ = ∑ a with (q a).toReal < (p a).toReal, ((p a).toReal - (q a).toReal) := by
+      rw [TVD_eq_sum_subset_aux, add_self_div_two]
+
+theorem TVD_eq_sum_max {α : Type*} [Fintype α] (p : PMF α) (q : PMF α) :
+    TVD p q = ∑ a : α, max 0 ((p a).toReal - (q a).toReal) := by
+  calc
+        TVD p q
+    _ = ∑ a with (q a).toReal < (p a).toReal, ((p a).toReal - (q a).toReal) :=
+      TVD_eq_sum_subset p q
+    _ = ∑ a, if (q a).toReal < (p a).toReal then (p a).toReal - (q a).toReal else 0 :=
+      Finset.sum_filter _ _
+    _ = ∑ a : α, max 0 ((p a).toReal - (q a).toReal) := by
+      simp_rw [max_zero_sub_ite]
+
+theorem TVD_eq_sum_min {α : Type*} [Fintype α] (p : PMF α) (q : PMF α) :
+    TVD p q = ∑ a : α, ((p a).toReal - min (p a).toReal (q a).toReal) := by
+  calc
+        TVD p q
+    _ = ∑ a : α, max 0 ((p a).toReal - (q a).toReal) :=
+      TVD_eq_sum_max p q
+    _ = ∑ a : α, ((p a).toReal - min (p a).toReal (q a).toReal) := by
+      apply Finset.sum_congr rfl
+      intro a ha
+      exact max_zero_sub_eq_sub_min (p a).toReal (q a).toReal
+
+theorem TVD_eq_sum_support_max {α : Type*} [Fintype α] (p : PMF α) (q : PMF α) :
+    TVD p q = ∑ a with p a ≠ 0, max 0 ((p a).toReal - (q a).toReal) := by
+  calc
+        TVD p q
+    _ = ∑ a, max 0 ((p a).toReal - (q a).toReal) := TVD_eq_sum_max p q
+    _ = ∑ a with p a ≠ 0, max 0 ((p a).toReal - (q a).toReal) +
+          ∑ a with p a = 0, max 0 ((p a).toReal - (q a).toReal) := by
+      rw [Finset.sum_filter_not_add_sum_filter]
+    _ = ∑ a with p a ≠ 0, max 0 ((p a).toReal - (q a).toReal) := by
+      apply add_eq_left.mpr
+      calc
+            ∑ a with p a = 0, max 0 ((p a).toReal - (q a).toReal)
+        _ = ∑ a with p a = 0, 0 := by
+          apply Finset.sum_congr rfl
+          intro a ha
+          simp only [Finset.mem_filter, Finset.mem_univ, true_and] at ha
+          have : (p a).toReal - (q a).toReal ≤ 0 := by
+            rw [sub_le_iff_le_add, zero_add, ha,]
+            apply (ENNReal.toReal_le_toReal (zero_ne_top) (apply_ne_top q a)).mpr
+            exact zero_le (q a)
+          exact max_eq_left_iff.mpr this
+        _ = 0 := Finset.sum_const_zero
+
+theorem TVD_eq_sum_support_min {α : Type*} [Fintype α] (p : PMF α) (q : PMF α) :
+    TVD p q = ∑ a with p a ≠ 0, ((p a).toReal - min (p a).toReal (q a).toReal) := by
+  calc
+        TVD p q
+    _ = ∑ a with p a ≠ 0, max 0 ((p a).toReal - (q a).toReal) :=
+      TVD_eq_sum_support_max p q
+    _ = ∑ a with p a ≠ 0, ((p a).toReal - min (p a).toReal (q a).toReal) := by
+      apply Finset.sum_congr rfl
+      intro a ha
+      exact max_zero_sub_eq_sub_min (p a).toReal (q a).toReal
+
+end TVD
 
 noncomputable section UniformDistributions
 
@@ -278,7 +426,6 @@ variable {α β : Type u} [Fintype α] [Nonempty α]
                         [Fintype β] [Nonempty β]
 
 
-open scoped Classical in
 /-- Drawing `a` uniformly from `α` and `b` uniformly from `β`
 and forming the pair `(a, b)` yields the uniform distribution
 on `α × β`. -/
@@ -291,6 +438,7 @@ lemma uniform_prod :
        let a ← uniformOfFintype α
        let b ← uniformOfFintype β
        pure (a, b)) = uniformOfFintype (α × β) := by
+  classical
   ext p
   let (a, b) := p
   simp only [bind_apply', uniformOfFintype_apply, pure_apply,
@@ -307,7 +455,6 @@ universe u v
 variable {α : Type u} [Fintype α] [Nonempty α]
          {β : Type v} [Fintype β] [Nonempty β]
 
-open scoped Classical in
 /-- If `f : α → β` is bijective, then drawing `a` uniformly from `α`
 and applying `f` yields the uniform distribution on `β`. -/
 /-
@@ -324,6 +471,7 @@ def foo : PMF β := do
 -/
 lemma map_eq_uniform_of_bijective (f : α → β) (hf : Function.Bijective f) :
     map f (uniformOfFintype α) = uniformOfFintype β := by
+  classical
   ext b
   simp only [map_apply, uniformOfFintype_apply]
   rw [Fintype.card_of_bijective hf]
