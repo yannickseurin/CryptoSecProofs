@@ -27,12 +27,14 @@
         "ElGamal",
         "Finset",
         "indistinguishability",
+        "injective",
         "iff",
         "Mathlib",
         "PKE",
         "PMF",
         "pointwise",
         "Seurin",
+        "surjective",
         "Yannick"
     ]
 }
