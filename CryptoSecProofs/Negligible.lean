@@ -228,7 +228,7 @@ lemma pow_le_exp (c : ℕ) :
       _ ≤ 2 ^ n * 2 ^ n := by
         simp only [Nat.ofNat_pos, pow_pos, mul_le_mul_iff_right₀]
         apply (Nat.pow_le_pow_iff_right (by norm_num)).mpr
-        omega
+        grind
       _ = (2 ^ n) ^ 2 := by ring
 
 theorem inv_exp_negl : negligible fun n ↦ (1 : ℝ) / 2 ^ n := by
