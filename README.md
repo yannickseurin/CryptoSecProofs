@@ -2,6 +2,7 @@
 
 [![Lean Action CI](https://github.com/yannickseurin/CryptoSecProofs/actions/workflows/lean_action_ci.yml/badge.svg)](https://github.com/yannickseurin/CryptoSecProofs/actions/workflows/lean_action_ci.yml)
 [![Dynamic Regex Badge](https://img.shields.io/badge/dynamic/regex?url=https://raw.githubusercontent.com/yannickseurin/CryptoSecProofs/refs/heads/main/lean-toolchain&search=leanprover/lean4:(.*)&replace=$1&label=Lean4)](https://github.com/leanprover/lean4)
+![sorry count](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/yannickseurin/CryptoSecProofs/gh-pages/sorry.json)
 
 A Lean 4 library for cryptographic security proofs.
 

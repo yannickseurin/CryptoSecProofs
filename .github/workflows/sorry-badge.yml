@@ -1,0 +1,58 @@
+name: Sorry badge
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: write # Read access to repository contents
+
+jobs:
+  sorry-badge:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Set up Lean
+        uses: leanprover/lean-action@v1
+
+      - name: Count sorrys
+        id: count
+        run: |
+          count=$(lake build 2>&1 | grep -c "uses 'sorry'" || true)
+          echo "count=$count" >> $GITHUB_OUTPUT
+
+      - name: Compute badge color
+        id: color
+        run: |
+          c=${{ steps.count.outputs.count }}
+          if [ "$c" -eq 0 ]; then
+            color="brightgreen"
+          elif [ "$c" -le 5 ]; then
+            color="yellow"
+          elif [ "$c" -le 20 ]; then
+            color="orange"
+          else
+            color="red"
+          fi
+          echo "color=$color" >> $GITHUB_OUTPUT
+
+      - name: Write badge JSON
+        run: |
+          mkdir -p badge
+          cat <<EOF > badge/sorry.json
+          {
+            "schemaVersion": 1,
+            "label": "sorry",
+            "message": "${{ steps.count.outputs.count }}",
+            "color": "${{ steps.color.outputs.color }}"
+          }
+          EOF
+
+      - name: Publish badge
+        if: github.ref == 'refs/heads/main'
+        uses: peaceiris/actions-gh-pages@v4
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: badge
