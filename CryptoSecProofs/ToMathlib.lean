@@ -254,7 +254,7 @@ theorem g_order {G : Type*} [Group G] (g : G) (hg : IsGenerator G g) :
     orderOf g = Nat.card G :=
   orderOf_eq_card_of_forall_mem_zpowers hg
 
-theorem zpow_val_add {G : Type*} [Group G] [Fintype G]
+theorem zpow_val_add {G : Type*} [Group G] [Finite G]
     (g : G) (hg : IsGenerator G g)
     (a b : ZMod (Nat.card G)) :
     g ^ (a + b).val = g ^ (a.val + b.val) := by
@@ -266,7 +266,7 @@ theorem zpow_val_add {G : Type*} [Group G] [Fintype G]
   rw [this]
   exact ZMod.val_add a b
 
-theorem zpow_val_mul {G : Type*} [Group G] [Fintype G]
+theorem zpow_val_mul {G : Type*} [Group G] [Finite G]
     (g : G) (hg : IsGenerator G g)
     (a b : ZMod (Nat.card G)) :
     g ^ (a * b).val = g ^ (a.val * b.val) := by
@@ -279,7 +279,7 @@ theorem zpow_val_mul {G : Type*} [Group G] [Fintype G]
   exact ZMod.val_mul a b
 
 /-- In a cyclic group, exponentiation is bijective. -/
-theorem exp_bijective {G : Type*} [Group G] [Fintype G]
+theorem exp_bijective {G : Type*} [Group G] [Finite G]
     (g : G) (hg : IsGenerator G g) :
     Function.Bijective fun (x : ZMod (Nat.card G)) ↦ g ^ x.val := by
   constructor
@@ -299,7 +299,7 @@ theorem exp_bijective {G : Type*} [Group G] [Fintype G]
 
 /-- In a cyclic group, exponentiation followed by multiplication by
 a fixed group element is bijective. -/
-theorem exp_mul_bijective {G : Type*} [Group G] [Fintype G]
+theorem exp_mul_bijective {G : Type*} [Group G] [Finite G]
     (g m : G) (hg : IsGenerator G g) :
     Function.Bijective fun (x : ZMod (Nat.card G)) ↦ g ^ x.val * m := by
   change Function.Bijective ((fun (a : G) ↦ a * m) ∘ (fun (x : ZMod (Nat.card G)) ↦ g ^ x.val))
