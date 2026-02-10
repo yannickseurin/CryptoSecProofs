@@ -15,24 +15,24 @@ Inspired from https://github.com/JoeyLupo/cryptolib/blob/main/src/negligible.lea
 It contains the formalization of a theorem
 by Bellare about two definitions of "negligible"
 for families of functions (see https://eprint.iacr.org/1997/004.pdf).
-Theorem 3.2 in the paper corresponds to `fun_fam_negligible_iff`.
+Theorem 3.2 in the paper corresponds to `pointwiseNegligible_iff_unifNegligible`.
 -/
 
 /-- A function is negligible if it approaches zero
 faster than the inverse of any polynomial. -/
-def negligible (f : ℕ → ℝ) :=
+def Negligible (f : ℕ → ℝ) :=
   ∀ c : ℕ, ∃ n₀, ∀ n, n₀ ≤ n → |f n| ≤ 1 / (n ^ c)
 
 /-- The zero function is negligible. -/
-theorem zero_negl : negligible (fun _ => 0) := by
-  unfold negligible
+theorem zero_negl : Negligible (fun _ => 0) := by
+  unfold Negligible
   intro c
   use 1
   intro n
   norm_num
 
 -- An auxiliary lemma.
-lemma negl_add_aux {f : ℕ → ℝ} (hf : negligible f) :
+lemma negl_add_aux {f : ℕ → ℝ} (hf : Negligible f) :
     ∀ c : ℕ, ∃ n₀, ∀ n, n₀ ≤ n → |f n| ≤ (1 / (n ^ c)) / 2 := by
   intro c
   rcases hf (c + 1) with ⟨n₀, hn₀⟩
@@ -59,9 +59,9 @@ lemma negl_add_aux {f : ℕ → ℝ} (hf : negligible f) :
   exact (mul_le_mul_iff_right₀ npowpos).mpr twolen
 
 /-- The sum of two negligible functions is negligible. -/
-theorem negl_add {f g : ℕ → ℝ} (hf : negligible f) (hg : negligible g) :
-    negligible (f + g) := by
-  unfold negligible
+theorem negl_add {f g : ℕ → ℝ} (hf : Negligible f) (hg : Negligible g) :
+    Negligible (f + g) := by
+  unfold Negligible
   intro c
   rcases negl_add_aux hf c with ⟨n₀, hnf⟩
   rcases negl_add_aux hg c with ⟨n₁, hng⟩
@@ -80,10 +80,10 @@ theorem negl_add {f g : ℕ → ℝ} (hf : negligible f) (hg : negligible g) :
 
 /-- If a function `f` is asymptotically upper bounded by
 a negligible function `g`, then it is negligible. -/
-theorem negl_of_bounded_negl {f g : ℕ → ℝ} (hg : negligible g) :
-    (∃ n₀, ∀ n, n₀ ≤ n → |f n| ≤ |g n|) → negligible f := by
+theorem negl_of_bounded_negl {f g : ℕ → ℝ} (hg : Negligible g) :
+    (∃ n₀, ∀ n, n₀ ≤ n → |f n| ≤ |g n|) → Negligible f := by
   rintro ⟨n₀, hn₀⟩
-  unfold negligible
+  unfold Negligible
   intro c
   rcases hg c with ⟨n₁, hn₁⟩
   use max n₀ n₁
@@ -91,8 +91,8 @@ theorem negl_of_bounded_negl {f g : ℕ → ℝ} (hg : negligible g) :
   exact le_trans (hn₀ n (le_of_max_le_left hn)) (hn₁ n (le_of_max_le_right hn))
 
 /-- The product of a negligible function and a monomial is negligible. -/
-theorem pow_mul_negl {f : ℕ → ℝ} {k : ℕ} (hf : negligible f) :
-    negligible fun n ↦ n ^ k * (f n) := by
+theorem pow_mul_negl {f : ℕ → ℝ} {k : ℕ} (hf : Negligible f) :
+    Negligible fun n ↦ n ^ k * (f n) := by
   induction k with
   | zero =>
     have : (fun n ↦ n ^ 0 * (f n)) = f := by
@@ -101,7 +101,7 @@ theorem pow_mul_negl {f : ℕ → ℝ} {k : ℕ} (hf : negligible f) :
     rw [this]
     exact hf
   | succ k ih =>
-    unfold negligible
+    unfold Negligible
     dsimp
     intro c
     rcases ih (c + 1) with ⟨n₀, hn₀⟩
@@ -231,8 +231,8 @@ lemma pow_le_exp (c : ℕ) :
         grind
       _ = (2 ^ n) ^ 2 := by ring
 
-theorem inv_exp_negl : negligible fun n ↦ (1 : ℝ) / 2 ^ n := by
-  unfold negligible
+theorem inv_exp_negl : Negligible fun n ↦ (1 : ℝ) / 2 ^ n := by
+  unfold Negligible
   dsimp
   intro c
   rcases (pow_le_exp c) with ⟨n₀, hn₀⟩
@@ -259,18 +259,18 @@ def fun_fam (I : Type*) := I → ℕ → ℝ
 variable {I : Type*}
 
 /-- `F` is pointwise negligible if `F i` is negligible for every `i : I`. -/
-def pw_negligible (F : fun_fam I) :=
-  ∀ i, negligible (F i)
+def PointwiseNegligible (F : fun_fam I) : Prop :=
+  ∀ i, Negligible (F i)
 
 /-- `F` is uniformly negligible is there exists
 a negligible function `δ` such that for all `i`,
 `F i` is eventually less than `δ`. -/
-def unif_negligible (F : fun_fam I) :=
-  ∃ δ : ℕ → ℝ, negligible δ ∧ ∀ i, ∃ n₀, ∀ n, n₀ ≤ n → |F i n| ≤ |δ n|
+def UnifNegligible (F : fun_fam I) : Prop :=
+  ∃ δ : ℕ → ℝ, Negligible δ ∧ ∀ i, ∃ n₀, ∀ n, n₀ ≤ n → |F i n| ≤ |δ n|
 
 /-- Uniform negligibility implies pointwise negligibility. -/
-theorem pw_negl_of_unif_negl (F : fun_fam I) (hF : unif_negligible F) :
-    pw_negligible F := by
+theorem pw_negl_of_unif_negl (F : fun_fam I) (hF : UnifNegligible F) :
+    PointwiseNegligible F := by
   obtain ⟨f, ⟨hf, h⟩⟩ := hF
   intro i
   apply negl_of_bounded_negl hf
@@ -279,10 +279,10 @@ theorem pw_negl_of_unif_negl (F : fun_fam I) (hF : unif_negligible F) :
 variable [Countable I] [Nonempty I]
 
 /-- Pointwise negligibility implies uniform negligibility. -/
-theorem unif_negl_of_pw_negl (F : fun_fam I) (hF : pw_negligible F) :
-    unif_negligible F := by
+theorem unif_negl_of_pw_negl (F : fun_fam I) (hF : PointwiseNegligible F) :
+    UnifNegligible F := by
   classical
-  simp only [pw_negligible, negligible, one_div] at hF
+  simp only [PointwiseNegligible, Negligible, one_div] at hF
   -- we follow Bellare's proof very closely
   -- We define function `N i c` such that
   -- `F i c ≤ 1 / n ^ c` for all `n ≥ N i c`
@@ -462,7 +462,7 @@ theorem unif_negl_of_pw_negl (F : fun_fam I) (hF : pw_negligible F) :
     · exact hδ i n this
     exact le_abs_self (δ n)
   -- `δ` is negligible
-  have claim₇ : negligible δ := by
+  have claim₇ : Negligible δ := by
     intro c
     use max (max (φ c) (N' 0 0)) 1
     intro n hn
@@ -506,8 +506,8 @@ theorem unif_negl_of_pw_negl (F : fun_fam I) (hF : pw_negligible F) :
 /--
 Pointwise negligibility and uniform negligibility are equivalent.
 -/
-theorem fun_fam_negligible_iff (F : fun_fam I) :
-    pw_negligible F ↔ unif_negligible F := by
+theorem pointwiseNegligible_iff_unifNegligible (F : fun_fam I) :
+    PointwiseNegligible F ↔ UnifNegligible F := by
   constructor
   · exact unif_negl_of_pw_negl F
   · exact pw_negl_of_unif_negl F
