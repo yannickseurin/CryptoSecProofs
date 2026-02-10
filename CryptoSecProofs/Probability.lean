@@ -163,9 +163,7 @@ theorem bind_skip_const (pa : PMF α) (pb : PMF β) (f : α → PMF β) :
   intro h
   ext b
   simp only [bind_apply, h]
-  rw [ENNReal.tsum_mul_right]
-  rw [tsum_coe pa]
-  simp only [one_mul]
+  rw [ENNReal.tsum_mul_right, tsum_coe pa, one_mul]
 
 @[simp]
 lemma bind_skip_const' (pa : PMF α) (pb : PMF β) (f : α → PMF β) :
