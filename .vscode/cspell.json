@@ -25,6 +25,7 @@
         "distinguisher",
         "distinguishers",
         "ElGamal",
+        "Feistel",
         "Finset",
         "indistinguishability",
         "injective",
