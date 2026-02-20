@@ -20,7 +20,7 @@ jobs:
       - name: Count sorrys
         id: count
         run: |
-          count=$(lake build 2>&1 | grep -c "uses 'sorry'" || true)
+          count=$(lake build 2>&1 | grep -c "uses `sorry`" || true)
           echo "count=$count" >> $GITHUB_OUTPUT
 
       - name: Compute badge color
