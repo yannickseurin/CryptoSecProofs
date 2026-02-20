@@ -248,10 +248,12 @@ lemma rerand_eq_ddhPMF_of_isddh (g X Y Z : G) (hg : IsGenerator G g)
     else 0
   let f' (p : ZMod #G × ZMod #G × ZMod #G) :=
     (p.1 + x, p.2.1 + y * p.2.2)
-  have h (p : ZMod #G × ZMod #G × ZMod #G) : -- p.1 = u, p.2.1 = v, p.2.2 = w
+  have h (p : ZMod #G × ZMod #G × ZMod #G) :
+      -- p.1 = u, p.2.1 = v, p.2.2 = w
+      let (u, v, w) := p
       (if Xs =
-        (g ^ (p.1.val + x.val), g ^ (p.2.1.val + y.val * p.2.2.val),
-        g ^ ((p.1.val + x.val) * (p.2.1.val + y.val * p.2.2.val))) then
+        (g ^ (u.val + x.val), g ^ (v.val + y.val * w.val),
+        g ^ ((u.val + x.val) * (v.val + y.val * w.val))) then
           (#G : ℝ≥0∞)⁻¹
       else 0) = f (f' p) := by
     simp only [f, f']
