@@ -202,7 +202,7 @@ lemma ddh_dist_ite (g X Y Z : G) (hg : IsGenerator G g) :
     group
   · rw [if_neg h]
     rw [IsDdh] at h
-    push_neg at h
+    push Not at h
     simp_rw [h]
     simp
 
