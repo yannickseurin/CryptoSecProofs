@@ -91,8 +91,7 @@ def ddhReduc (g : Generator G) (X Y Z : G) : PMF Bool := do
   PMF.pure (if b = b' then true else false)
 
 lemma ind_cpa_to_ddh₀ : PKE.indCpaGame adv = ddhGame₀ (ddhReduc adv) := by
-  simp only [PKE.indCpaGame, ddhGame₀, ddhReduc, elgamal_setup,
-    elgamal_keygen, elgamal_encrypt, ddhPMF]
+  simp only [PKE.indCpaGame, ddhGame₀, ddhReduc, ddhPMF, elgamal]
   apply bind_skip'
   intro (g : Generator G)
   simp_rw [bind_bind', pure_bind']
@@ -135,8 +134,8 @@ lemma game₁_to_ddh₁ : Game₁ adv = ddhGame₁ (ddhReduc adv) := by
   simp only [Game₁, ddhGame₁, ddhReduc, ddhRandomPMF]
   simp_rw [bind_bind', pure_bind']
 
-omit [DecidableEq G] in
-lemma rewrite_lemma {α : Type} (g mb : G) (p : G → PMF α) :
+omit [DecidableEq G] [Fintype G] in
+lemma rewrite_lemma [Finite G] {α : Type} (g mb : G) (p : G → PMF α) :
     (do
       let m ← (do
         let z ← uniformZMod #G
@@ -147,8 +146,8 @@ lemma rewrite_lemma {α : Type} (g mb : G) (p : G → PMF α) :
       p (g ^ z.val * mb)) := by
   simp
 
-omit [DecidableEq G] in
-lemma rewrite_lemma' {α : Type} (g : G) (p : G → PMF α) :
+omit [DecidableEq G] [Fintype G] in
+lemma rewrite_lemma' [Finite G] {α : Type} (g : G) (p : G → PMF α) :
     (do
       let m ← (do
         let z ← uniformZMod #G
