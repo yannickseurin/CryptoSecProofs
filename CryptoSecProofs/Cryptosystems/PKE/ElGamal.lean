@@ -71,6 +71,7 @@ lemma enc_dec (g : Generator G) (m : G) (x r : ZMod #G) :
   exact mul_inv_cancel_comm (g.val ^ (x.val * r.val)) m
 
 theorem perfectly_correct : (elgamal G).PerfectlyCorrect := by
+  -- don't use `elgamal_decrypt` so that `enc_dec` gets used instead
   simp [-elgamal_decrypt, PKE.PerfectlyCorrect, PKE.correctnessGame, enc_dec]
 
 end Correctness
@@ -89,7 +90,7 @@ def ddhReduc (g : Generator G) (X Y Z : G) : PMF Bool := do
   let b' ← adv.A₂ (Y, Z * mb) st
   PMF.pure (if b = b' then true else false)
 
-lemma ind_cpa_to_dddh₀ : PKE.indCpaGame adv = ddhGame₀ (ddhReduc adv) := by
+lemma ind_cpa_to_ddh₀ : PKE.indCpaGame adv = ddhGame₀ (ddhReduc adv) := by
   simp only [PKE.indCpaGame, ddhGame₀, ddhReduc, elgamal_setup,
     elgamal_keygen, elgamal_encrypt, ddhPMF]
   apply bind_skip'
@@ -176,8 +177,6 @@ lemma game₁_to_game₂ : Game₁ adv = Game₂ adv := by
   apply bind_skip'
   intro b
   let mb : G := if b then m₁ else m₀
-  have : mb = if b then m₁ else m₀ := rfl
-  rw [← this]
   let p (m : G) := do
     let b' ← adv.A₂ (g.val ^ y.val, m) st
     PMF.pure (if b = b' then true else false)
@@ -216,9 +215,9 @@ lemma game₂_uniform : Game₂ adv = uniformOfFintype Bool := by
 theorem ind_cpa : PKE.indCpaAdvantage adv = ddhAdvantage (ddhReduc adv) := by
   simp only [PKE.indCpaAdvantage, ddhAdvantage]
   congr
-  · exact ind_cpa_to_dddh₀ adv
-  rw [← game₁_to_ddh₁, game₁_to_game₂, game₂_uniform]
-  simp
+  · exact ind_cpa_to_ddh₀ adv
+  · rw [← game₁_to_ddh₁, game₁_to_game₂, game₂_uniform]
+    simp
 
 end IND_CPA_Proof
 
