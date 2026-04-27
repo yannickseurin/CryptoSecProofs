@@ -14,27 +14,47 @@ See https://leanprover.zulipchat.com/#narrow/channel/113489-new-members/topic/in
 instance {α : Type u} [Finite α] [Nonempty α] : NeZero (Nat.card α) where
   out := Nat.card_ne_zero.mpr ⟨inferInstance, inferInstance⟩
 
+lemma two_le_card_of_nontrivial (α : Type) [Fintype α] [Nontrivial α] :
+    2 ≤ Fintype.card α := by
+  classical
+  obtain ⟨a, b, hab⟩ := exists_pair_ne α
+  have : ({a, b} : Finset α).card ≤ Fintype.card α :=
+    Finset.card_le_card (by simp)
+  simpa [Finset.card_pair, hab] using this
+
+/-- The number of pairs whose left coordinate falls in a given set. -/
+lemma card_pairs_with_fst_mem {α β : Type}
+    [DecidableEq α] [Fintype α] [Fintype β]
+    (s : Finset α) :
+    ({ p : α × β | p.1 ∈ s } : Finset (α × β)).card = s.card * Fintype.card β := by
+  have hs :
+      ({ p : α × β | p.1 ∈ s } : Finset (α × β)) =
+        s ×ˢ (Finset.univ : Finset β) := by
+    ext p
+    simp [Finset.mem_product]
+  rw [hs, Finset.card_product, Finset.card_univ]
+
 section Order
 
 lemma max_zero_sub_ite {α : Type*}
     [AddCommGroup α] [LinearOrder α] [IsOrderedAddMonoid α]
     (a b : α) :
     max 0 (a - b) = if b < a then a - b else 0 := by
-    by_cases h : b < a
-    · have : 0 ≤ a - b := sub_nonneg.mpr (le_of_lt h)
-      simp [h, max_eq_right this]
-    · have : a - b ≤ 0 := sub_nonpos.mpr (le_of_not_gt h)
-      simp [h, max_eq_left this]
+  by_cases h : b < a
+  · have : 0 ≤ a - b := sub_nonneg.mpr (le_of_lt h)
+    simp [h, max_eq_right this]
+  · have : a - b ≤ 0 := sub_nonpos.mpr (le_of_not_gt h)
+    simp [h, max_eq_left this]
 
 lemma sub_min_ite {α : Type*}
     [AddCommGroup α] [LinearOrder α] [IsOrderedAddMonoid α]
     (a b : α) :
      a - min a b = if b < a then a - b else 0 := by
-    by_cases h : b < a
-    · have : b ≤ a := le_of_lt h
-      simp [h, min_eq_right this]
-    · have : a ≤ b := not_lt.mp h
-      simp [h, min_eq_left this]
+  by_cases h : b < a
+  · have : b ≤ a := le_of_lt h
+    simp [h, min_eq_right this]
+  · have : a ≤ b := not_lt.mp h
+    simp [h, min_eq_left this]
 
 lemma max_zero_sub_eq_sub_min {α : Type*}
     [AddCommGroup α] [LinearOrder α] [IsOrderedAddMonoid α]
@@ -54,7 +74,7 @@ lemma List.eraseDups_length_le_aux
     have : l = [] := by
       apply Nat.eq_zero_of_le_zero at h
       apply List.eq_nil_of_length_eq_zero at h
-      assumption
+      exact h
     rw [this]
     simp
   | succ q ih =>
@@ -93,9 +113,9 @@ def toVector (v : List.Vector α n) : Vector α n := ⟨v.1.toArray, v.2⟩
 
 def ofVector (v : Vector α n) : List.Vector α n := ⟨v.toList, v.2⟩
 
-theorem ofVector_toVector (v : List.Vector α n) : ofVector (toVector v) = v := rfl
+lemma ofVector_toVector (v : List.Vector α n) : ofVector (toVector v) = v := rfl
 
-theorem toVector_ofVector (v : Vector α n) : toVector (ofVector v) = v := rfl
+lemma toVector_ofVector (v : Vector α n) : toVector (ofVector v) = v := rfl
 
 def equivVector : List.Vector α n ≃ Vector α n where
   toFun := toVector
@@ -107,11 +127,51 @@ instance Vector.fintype' [Fintype α] :
     Fintype (Vector α n) :=
   Fintype.ofEquiv (List.Vector α n) equivVector
 
+lemma Vector.toFinset_card_eq_of_mem_eq_iff
+    {α β : Type*} [DecidableEq α] [DecidableEq β]
+    {n : ℕ} {u : Vector α n} {v : Vector β n}
+    (h : ∀ i j : Fin n, u[i] = u[j] ↔ v[i] = v[j]) :
+    u.toList.toFinset.card = v.toList.toFinset.card := by
+  let f : Fin n → α := fun i => u[i]
+  let g : Fin n → β := fun i => v[i]
+  -- Reformulate hypothesis on `Fin` indices
+  have h' : ∀ i j : Fin n, f i = f j ↔ g i = g j := by
+    simpa [f, g]
+  -- Identify the `Finset`s as images
+  have hu :
+      u.toList.toFinset = Finset.univ.image f := by
+    ext a
+    simp [f, Vector.mem_toList_iff, Vector.mem_iff_getElem]
+    tauto
+  have hv :
+      v.toList.toFinset = Finset.univ.image g := by
+    ext a
+    simp [g, Vector.mem_toList_iff, Vector.mem_iff_getElem]
+    tauto
+  simp only [hu, hv]
+  fapply Finset.card_bij
+  · use fun a ha => v[Classical.choose (Finset.mem_image.mp ha)]
+  · exact fun a ha => Finset.mem_image_of_mem _ (Finset.mem_univ _)
+  · intro a₁ ha₁ a₂ ha₂ h_eq
+    let i₁ := Classical.choose (Finset.mem_image.mp ha₁)
+    let i₂ := Classical.choose (Finset.mem_image.mp ha₂)
+    have h₁ := Classical.choose_spec (Finset.mem_image.mp ha₁)
+    have h₂ := Classical.choose_spec (Finset.mem_image.mp ha₂)
+    specialize h i₁ i₂
+    aesop
+  · simp only [Finset.mem_image, Finset.mem_univ, true_and, Fin.getElem_fin, forall_exists_index,
+    forall_apply_eq_imp_iff]
+    intro i
+    use u[i], ⟨i ,rfl⟩
+    have hi := Finset.mem_image_of_mem f (Finset.mem_univ i)
+    have := Classical.choose_spec (Finset.mem_image.mp hi)
+    aesop
+
 end Vector
 
 section FinsetSum
 
-theorem Finset.sum_mem_add_sum_compl
+lemma Finset.sum_mem_add_sum_compl
     {ι : Type*} {M : Type*}
     [AddCommMonoid M] [DecidableEq ι] [Fintype ι]
     (s : Finset ι) (f : ι → M) :
@@ -121,7 +181,56 @@ theorem Finset.sum_mem_add_sum_compl
   simp_rw [mem_compl]
   rw [Finset.sum_filter_add_sum_filter_not]
 
+lemma Finset.sum_union_le_add_of_nonneg
+    {ι : Type u} {N : Type v}
+    {s₁ s₂ : Finset ι}
+    [AddCommGroup N] [PartialOrder N]
+    [AddLeftMono N]
+    {f : ι → N}
+    (hf : ∀ x, 0 ≤ f x)
+    [DecidableEq ι] :
+    ∑ x ∈ s₁ ∪ s₂, f x ≤
+      ∑ x ∈ s₁, f x + ∑ x ∈ s₂, f x := by
+  have h :=
+    Finset.sum_union_inter (s₁ := s₁) (s₂ := s₂) (f := f)
+  have hpos : 0 ≤ ∑ x ∈ s₁ ∩ s₂, f x :=
+    Finset.sum_nonneg (fun x _ ↦ hf x)
+  have h' :
+      ∑ x ∈ s₁ ∪ s₂, f x =
+        (∑ x ∈ s₁, f x + ∑ x ∈ s₂, f x) -
+        ∑ x ∈ s₁ ∩ s₂, f x := by
+    symm
+    apply sub_eq_of_eq_add
+    exact h.symm
+  simpa [h'] using
+    sub_le_self (∑ x ∈ s₁, f x + ∑ x ∈ s₂, f x) hpos
+
 end FinsetSum
+
+section NatCast
+
+lemma Nat.cast_mul_sub_self_nonneg (n : ℕ) : 0 ≤ (n : ℝ) * (n - 1) := by
+  by_cases h : n = 0
+  · simp [h]
+  · apply mul_nonneg
+    · positivity
+    · have : 1 ≤ n := by grind
+      aesop
+
+lemma Nat.cast_choose_two_nonneg (n : ℕ) : 0 ≤ (n.choose 2 : ℝ) := by
+  rw [Nat.cast_choose_two]
+  apply div_nonneg
+  · apply Nat.cast_mul_sub_self_nonneg
+  · positivity
+
+lemma Nat.cast_le_sq (n : ℕ) : (n : ℝ) ≤ n ^ 2 := by
+  apply sub_nonneg.mp
+  have : (n : ℝ) ^2 - n = (n : ℝ) * (n - 1) := by
+    ring
+  rw [this]
+  exact cast_mul_sub_self_nonneg n
+
+end NatCast
 
 section Bijection
 
@@ -141,7 +250,7 @@ def nfoldMap {α : Type u} {β : Type v} (f : α → β) : (n : ℕ) → nfoldPr
 
 variable {α : Type u} {β : Type v} {f : α → β}
 
-theorem Function.bijective_iff_has_inverse' :
+lemma Function.bijective_iff_has_inverse' :
     Bijective f ↔ ∃ g : β → α, (∀ x : α, ∀ y : β, y = f x ↔ x = g y) := by
   constructor
   · intro f_bij
@@ -151,8 +260,8 @@ theorem Function.bijective_iff_has_inverse' :
     constructor
     · intro h
       rw [eq_comm, h, gli]
-    intro h
-    rw [eq_comm, h, gri]
+    · intro h
+      rw [eq_comm, h, gri]
   rintro ⟨g, hg⟩
   apply Function.bijective_iff_has_inverse.mpr
   use g
@@ -160,11 +269,11 @@ theorem Function.bijective_iff_has_inverse' :
   · intro x
     have : f x = f x ↔ x = g (f x) := hg x (f x)
     tauto
-  intro y
-  have : g y = g y ↔ y = f (g y) := iff_comm.mp (hg (g y) y)
-  tauto
+  · intro y
+    have : g y = g y ↔ y = f (g y) := iff_comm.mp (hg (g y) y)
+    tauto
 
-theorem Function.bijective_nfold (n : ℕ) (hf : Function.Bijective f) :
+lemma Function.bijective_nfold (n : ℕ) (hf : Function.Bijective f) :
     Function.Bijective (nfoldMap f n) := by
   apply (Function.bijective_iff_existsUnique (nfoldMap f n)).mpr
   cases n with
@@ -191,30 +300,30 @@ section ENNReal
 
 namespace ENNReal
 
-theorem mul_natCast {a b : ℕ} : (a : ℝ≥0∞) * (b : ℝ≥0∞) = (↑(a * b) : ℝ≥0∞) := by
-  exact Eq.symm (Nat.cast_mul a b)
+lemma mul_natCast {a b : ℕ} : (a : ℝ≥0∞) * (b : ℝ≥0∞) = (↑(a * b) : ℝ≥0∞) := by
+  rw [← Nat.cast_mul]
 
-theorem mul_inv_natCast {a b : ℕ} :
+lemma mul_inv_natCast {a b : ℕ} :
     ((a : ℝ≥0∞) * (b : ℝ≥0∞))⁻¹ = (a : ℝ≥0∞)⁻¹ * (b : ℝ≥0∞)⁻¹ := by
   apply ENNReal.mul_inv
   · right
     exact ENNReal.natCast_ne_top b
-  left
-  exact ENNReal.natCast_ne_top a
+  · left
+    exact ENNReal.natCast_ne_top a
 
-theorem inv_mul_cancel_natCast {a : ℕ} (ha : a ≠ 0) :
+lemma inv_mul_cancel_natCast {a : ℕ} (ha : a ≠ 0) :
      (a : ℝ≥0∞)⁻¹ * (a : ℝ≥0∞) = 1 := by
   apply ENNReal.inv_mul_cancel
   · exact Nat.cast_ne_zero.mpr ha
-  exact natCast_ne_top a
+  · exact natCast_ne_top a
 
-theorem mul_inv_cancel_natCast {a : ℕ} (ha : a ≠ 0) :
+lemma mul_inv_cancel_natCast {a : ℕ} (ha : a ≠ 0) :
      (a : ℝ≥0∞) * (a : ℝ≥0∞)⁻¹  = 1 := by
   apply ENNReal.mul_inv_cancel
   · exact Nat.cast_ne_zero.mpr ha
-  exact natCast_ne_top a
+  · exact natCast_ne_top a
 
-theorem toReal_ite (a b : ℝ≥0∞) (P : Prop) [Decidable P] :
+lemma toReal_ite (a b : ℝ≥0∞) (P : Prop) [Decidable P] :
     (if P then a else b).toReal = if P then a.toReal else b.toReal := by
   exact apply_ite ENNReal.toReal P a b
 
@@ -243,18 +352,18 @@ def Generator (G : Type*) [Group G] :=
 
 noncomputable instance (G : Type*) [Group G] [IsCyclic G] [Fintype G] :
     Fintype (Generator G) :=
-  Subtype.fintype fun x ↦ ∀ (x_1 : G), x_1 ∈ Subgroup.zpowers x
+  Subtype.fintype fun x ↦ ∀ y : G, y ∈ Subgroup.zpowers x
 
 instance (G : Type*) [Group G] [IsCyclic G] :
     Nonempty (Generator G) := by
   simp only [Generator, IsGenerator, nonempty_subtype]
   exact IsCyclic.exists_zpow_surjective
 
-theorem g_order {G : Type*} [Group G] (g : G) (hg : IsGenerator G g) :
+lemma g_order {G : Type*} [Group G] (g : G) (hg : IsGenerator G g) :
     orderOf g = Nat.card G :=
   orderOf_eq_card_of_forall_mem_zpowers hg
 
-theorem zpow_val_add {G : Type*} [Group G] [Finite G]
+lemma zpow_val_add {G : Type*} [Group G] [Finite G]
     (g : G) (hg : IsGenerator G g)
     (a b : ZMod (Nat.card G)) :
     g ^ (a + b).val = g ^ (a.val + b.val) := by
@@ -266,7 +375,7 @@ theorem zpow_val_add {G : Type*} [Group G] [Finite G]
   rw [this]
   exact ZMod.val_add a b
 
-theorem zpow_val_mul {G : Type*} [Group G] [Finite G]
+lemma zpow_val_mul {G : Type*} [Group G] [Finite G]
     (g : G) (hg : IsGenerator G g)
     (a b : ZMod (Nat.card G)) :
     g ^ (a * b).val = g ^ (a.val * b.val) := by
@@ -279,33 +388,31 @@ theorem zpow_val_mul {G : Type*} [Group G] [Finite G]
   exact ZMod.val_mul a b
 
 /-- In a cyclic group, exponentiation is bijective. -/
-theorem exp_bijective {G : Type*} [Group G] [Finite G]
+lemma exp_bijective {G : Type*} [Group G] [Finite G]
     (g : G) (hg : IsGenerator G g) :
     Function.Bijective fun (x : ZMod (Nat.card G)) ↦ g ^ x.val := by
   constructor
-  · simp only [Function.Injective]
-    intro a₁ a₂ h
+  · intro a₁ a₂ h
     rw [← ZMod.natCast_zmod_val a₁, ← ZMod.natCast_zmod_val a₂, ZMod.natCast_eq_natCast_iff]
     have : a₁.val ≡ a₂.val [MOD orderOf g] := pow_eq_pow_iff_modEq.mp h
     rw [g_order g hg] at this
     exact this
-  simp only [Function.Surjective]
-  intro b
-  rcases hg b with ⟨z, rfl⟩
-  dsimp
-  use (z : ZMod (Nat.card G))
-  rw [← zpow_natCast g (z : ZMod (Nat.card G)).val, ZMod.val_intCast z]
-  rw [← zpow_mod_orderOf g z, g_order g hg]
+  · intro b
+    rcases hg b with ⟨z, rfl⟩
+    dsimp
+    use (z : ZMod (Nat.card G))
+    rw [← zpow_natCast g (z : ZMod (Nat.card G)).val, ZMod.val_intCast z]
+    rw [← zpow_mod_orderOf g z, g_order g hg]
 
 /-- In a cyclic group, exponentiation followed by multiplication by
 a fixed group element is bijective. -/
-theorem exp_mul_bijective {G : Type*} [Group G] [Finite G]
+lemma exp_mul_bijective {G : Type*} [Group G] [Finite G]
     (g m : G) (hg : IsGenerator G g) :
     Function.Bijective fun (x : ZMod (Nat.card G)) ↦ g ^ x.val * m := by
   change Function.Bijective ((fun (a : G) ↦ a * m) ∘ (fun (x : ZMod (Nat.card G)) ↦ g ^ x.val))
   apply Function.Bijective.comp
   · exact mulRight_bijective m
-  exact exp_bijective g hg
+  · exact exp_bijective g hg
 
 end Group
 
