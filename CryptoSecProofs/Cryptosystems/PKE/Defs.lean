@@ -45,7 +45,7 @@ namespace PKE
 
 /-- The correctness experiment.
 Executes the public-key scheme by encrypting and decrypting some message `m`
-and returns `true` if the ciphertexts decrypts to `m` and `false` otherwise. -/
+and returns `true` if the ciphertext decrypts to `m` and `false` otherwise. -/
 noncomputable def correctnessGame (pke : PKE) (m : pke.M) : PMF Bool := do
   let par ← pke.setup
   let (sk, pk) ← pke.keygen par
