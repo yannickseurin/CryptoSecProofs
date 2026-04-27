@@ -11,21 +11,20 @@ open ENNReal
 namespace PMF
 
 @[simp]
-theorem tsum_toReal {α : Type*} (p : PMF α) :
+lemma tsum_toReal {α : Type*} (p : PMF α) :
     ∑' a : α, (p a).toReal = 1 := by
   rw [← ENNReal.tsum_toReal_eq (apply_ne_top p)]
   simp
 
 @[simp]
-theorem sum_toReal {α : Type*} [Fintype α] (p : PMF α) :
+lemma sum_toReal {α : Type*} [Fintype α] (p : PMF α) :
     ∑ a : α, (p a).toReal = 1 := by
   have : ∑' a : α, (p a).toReal = ∑ a : α, (p a).toReal := by
     exact tsum_fintype fun a ↦ (p a).toReal
   rw [← this]
   simp [-tsum_fintype]
 
-open scoped Classical in
-theorem ite_ne_top {α : Type*} (p : PMF α) (a : α) (P : Prop) :
+lemma ite_ne_top {α : Type*} (p : PMF α) (a : α) (P : Prop) [Decidable P] :
     (if P then p a else 0) ≠ ⊤ := by
   have ite_le : (if P then p a else 0) ≤  p a := by
     have : p a = max (p a) 0 := (ENNReal.max_zero_right).symm
@@ -33,6 +32,14 @@ theorem ite_ne_top {α : Type*} (p : PMF α) (a : α) (P : Prop) :
     apply ite_le_sup (p a) 0 P
   have : p a ≠ ⊤ := apply_ne_top p a
   exact ne_top_of_le_ne_top this ite_le
+
+/-- `PMF.map_apply` in Mathlib uses `open scoped Classical in` which causes
+problems. This is a version without it. -/
+@[simp]
+lemma map_apply' {α β : Type*} [DecidableEq β]
+    (f : α → β) (p : PMF α) (b : β) :
+    (map f p) b = ∑' (a : α), if b = f a then p a else 0 := by
+  simp [map]
 
 section PMFMonadVariants
 
@@ -42,41 +49,41 @@ variable {α β γ : Type u}
 
 -- variant of `PMF.pure_bind`
 @[simp]
-theorem pure_bind' (a : α) (f : α → PMF β) :
+lemma pure_bind' (a : α) (f : α → PMF β) :
     ((pure a) >>= f) = f a := pure_bind a f
 
 -- variant of `PMF.pure_bind`
 @[simp]
-theorem pure_bind'' (a : α) (f : α → PMF β) :
+lemma pure_bind'' (a : α) (f : α → PMF β) :
     (do
       let a' ← pure a
       f a') = f a := pure_bind a f
 
 -- variant of `PMF.bind_pure`
 @[simp]
-theorem bind_pure' (p : PMF α) :
+lemma bind_pure' (p : PMF α) :
     p >>= pure = p := bind_pure p
 
 -- variant of `PMF.bind_pure`
 @[simp]
-theorem bind_pure'' (p : PMF α) :
+lemma bind_pure'' (p : PMF α) :
     (do
       let a ← p
       pure a) = p := bind_pure p
 
 -- variant of `PMF.bind_apply`
 @[simp]
-theorem bind_apply' (p : PMF α) (f : α → PMF β) (b : β) :
+lemma bind_apply' (p : PMF α) (f : α → PMF β) (b : β) :
     (p >>= f) b = ∑' (a : α), p a * (f a) b := bind_apply p f b
 
 -- variant of `PMF.bind_bind`
 @[simp]
-theorem bind_bind' (p : PMF α) (f : α → PMF β) (g : β → PMF γ) :
+lemma bind_bind' (p : PMF α) (f : α → PMF β) (g : β → PMF γ) :
     (p >>= f) >>= g = p >>= (fun (a : α) ↦ (f a) >>= g) := bind_bind p f g
 
 -- variant of `PMF.bind_bind`
 @[simp]
-theorem bind_bind'' (p : PMF α) (f : α → PMF β) (g : β → PMF γ) :
+lemma bind_bind'' (p : PMF α) (f : α → PMF β) (g : β → PMF γ) :
     (do
       let b ← (do
         let a ← p
@@ -87,10 +94,10 @@ theorem bind_bind'' (p : PMF α) (f : α → PMF β) (g : β → PMF γ) :
       let b ← f a
       g b) := bind_bind p f g
 
-theorem bind_comm' (p : PMF α) (q : PMF β) (f : α → β → PMF γ) :
+lemma bind_comm' (p : PMF α) (q : PMF β) (f : α → β → PMF γ) :
     (p >>= fun a ↦ q >>= f a) = q >>= fun b ↦ p >>= fun a ↦ f a b := bind_comm p q f
 
-theorem bind_comm'' (p : PMF α) (q : PMF β) (f : α → β → PMF γ) :
+lemma bind_comm'' (p : PMF α) (q : PMF β) (f : α → β → PMF γ) :
     (do
       let a ← p
       let b ← q
@@ -100,14 +107,14 @@ theorem bind_comm'' (p : PMF α) (q : PMF β) (f : α → β → PMF γ) :
       let a ← p
       f a b) := bind_comm p q f
 
-theorem mem_support_bind_iff' (p : PMF α) (f : α → PMF β) (b : β) :
+lemma mem_support_bind_iff' (p : PMF α) (f : α → PMF β) (b : β) :
     b ∈ (p >>= f).support ↔ ∃ a ∈ p.support, b ∈ (f a).support :=
   mem_support_bind_iff p f b
 
-theorem map_bind' (p : PMF α) (q : α → PMF β) (f : β → γ) :
+lemma map_bind' (p : PMF α) (q : α → PMF β) (f : β → γ) :
     map f (p >>= q) = p >>= fun (a : α) ↦ map f (q a) := map_bind p q f
 
-theorem map_bind'' (p : PMF α) (q : α → PMF β) (f : β → γ) :
+lemma map_bind'' (p : PMF α) (q : α → PMF β) (f : β → γ) :
     map f (do
       let a ← p
       q a) =
@@ -116,11 +123,11 @@ theorem map_bind'' (p : PMF α) (q : α → PMF β) (f : β → γ) :
       map f (q a)) := map_bind p q f
 
 @[simp]
-theorem bind_map' (p : PMF α) (f : α → β) (q : β → PMF γ) :
+lemma bind_map' (p : PMF α) (f : α → β) (q : β → PMF γ) :
     (map f p) >>= q = p >>= (q ∘ f) := bind_map p f q
 
 @[simp]
-theorem bind_map'' (p : PMF α) (f : α → β) (q : β → PMF γ) :
+lemma bind_map'' (p : PMF α) (f : α → β) (q : β → PMF γ) :
     (do
       let b ← map f p
       q b) =
@@ -136,19 +143,19 @@ universe u
 
 variable {α β : Type u}
 
-theorem bind_skip (p : PMF α) (f g : α → PMF β) :
+lemma bind_skip (p : PMF α) (f g : α → PMF β) :
     (∀ a : α, f a = g a) → p.bind f = p.bind g := by
   intro h
   ext b
   simp only [bind_apply]
   apply tsum_congr
-  intro b
-  rw [h b]
+  intro a
+  rw [h a]
 
-theorem bind_skip' (p : PMF α) (f g : α → PMF β) :
+lemma bind_skip' (p : PMF α) (f g : α → PMF β) :
     (∀ a : α, f a = g a) → (p >>= f) = (p >>= g) := bind_skip p f g
 
-theorem bind_skip'' (p : PMF α) (f g : α → PMF β) :
+lemma bind_skip'' (p : PMF α) (f g : α → PMF β) :
     (∀ a : α, f a = g a) →
       (do
         let a ← p
@@ -158,7 +165,7 @@ theorem bind_skip'' (p : PMF α) (f g : α → PMF β) :
         g a) := bind_skip p f g
 
 @[simp]
-theorem bind_skip_const (pa : PMF α) (pb : PMF β) (f : α → PMF β) :
+lemma bind_skip_const (pa : PMF α) (pb : PMF β) (f : α → PMF β) :
     (∀ a : α, f a = pb) → pa.bind f = pb := by
   intro h
   ext b
@@ -170,14 +177,14 @@ lemma bind_skip_const' (pa : PMF α) (pb : PMF β) (f : α → PMF β) :
     (∀ a : α, f a = pb) → (pa >>= f) = pb := bind_skip_const pa pb f
 
 @[simp]
-theorem bind_skip_const'' (pa : PMF α) (pb : PMF β) (f : α → PMF β) :
+lemma bind_skip_const'' (pa : PMF α) (pb : PMF β) (f : α → PMF β) :
     (∀ a : α, f a = pb) →
       (do
         let a ← pa
         f a) = pb := bind_skip_const pa pb f
 
 @[simp]
-theorem map_prod_fst (a : α) (p : PMF β) :
+lemma map_prod_fst (a : α) (p : PMF β) :
     map Prod.fst (do
       let b ← p
       PMF.pure (a, b)) =
@@ -185,26 +192,27 @@ theorem map_prod_fst (a : α) (p : PMF β) :
   simp [map_bind', pure_map]
 
 @[simp]
-theorem map_prod_snd (p : PMF α) (b : β) :
+lemma map_prod_snd (p : PMF α) (b : β) :
     map Prod.snd (do
       let a ← p
       PMF.pure (a, b)) =
     PMF.pure b := by
   simp [map_bind', pure_map]
 
-theorem apply_eq_zero_of_map_pure_of_ne
+lemma apply_eq_zero_of_map_pure_of_ne
     {a : α} {b₀ : β} (p : PMF α) (f : α → β)
     (h : map f p = PMF.pure b₀) (hne : b₀ ≠ f a) :
     p a = 0 := by
   classical
   have : (∑' (a' : α), if f a = f a' then p a' else 0) = 0 := by
     simp only [← (map_apply f p (f a)), h, pure_apply, ite_eq_right_iff, one_ne_zero, imp_false]
-    tauto
+    exact hne.symm
   simp only [ENNReal.tsum_eq_zero, ite_eq_right_iff] at this
   specialize this a
-  tauto
+  simp only [forall_const] at this
+  exact this
 
-theorem bind_pure_bind
+lemma bind_pure_bind
     (p : PMF α) (f : α → β) (g : α → β → PMF γ)
     (h : map f p = PMF.pure b₀) :
     (do
@@ -246,15 +254,15 @@ noncomputable section TVD
 def TVD {α : Type*} [Fintype α] (p q : PMF α) :=
   (∑ a : α, |(p a).toReal - (q a).toReal|) / 2
 
-theorem TVD_self {α : Type*} [Fintype α] (p : PMF α) :
+lemma TVD_self {α : Type*} [Fintype α] (p : PMF α) :
     TVD p p = 0 := by
   simp [TVD]
 
-theorem TVD_comm {α : Type*} [Fintype α] (p q : PMF α) :
+lemma TVD_comm {α : Type*} [Fintype α] (p q : PMF α) :
     TVD p q = TVD q p := by
   simp [TVD, abs_sub_comm]
 
-theorem TVD_triangle {α : Type*} [Fintype α] (p q r : PMF α) :
+lemma TVD_triangle {α : Type*} [Fintype α] (p q r : PMF α) :
     TVD p r ≤ TVD p q + TVD q r := by
   simp only [TVD]
   calc
@@ -281,12 +289,12 @@ lemma TVD_eq_sum_subset_aux {α : Type*} [Fintype α] (p : PMF α) (q : PMF α) 
     ∑ a with ¬(q a).toReal < (p a).toReal, ((q a).toReal - (p a).toReal) =
       ∑ a with (q a).toReal < (p a).toReal, ((p a).toReal - (q a).toReal) := by
   apply eq_of_sub_eq_zero
-  repeat rw [Finset.sum_sub_distrib]
+  simp only [Finset.sum_sub_distrib]
   rw [sub_sub_sub_eq]
-  repeat rw [Finset.sum_filter_not_add_sum_filter]
+  simp only [Finset.sum_filter_not_add_sum_filter]
   simp
 
-theorem TVD_eq_sum_subset {α : Type*} [Fintype α] (p : PMF α) (q : PMF α) :
+lemma TVD_eq_sum_subset {α : Type*} [Fintype α] (p : PMF α) (q : PMF α) :
     TVD p q = ∑ a with (q a).toReal < (p a).toReal, ((p a).toReal - (q a).toReal) := by
   calc
         TVD p q
@@ -318,7 +326,7 @@ theorem TVD_eq_sum_subset {α : Type*} [Fintype α] (p : PMF α) (q : PMF α) :
     _ = ∑ a with (q a).toReal < (p a).toReal, ((p a).toReal - (q a).toReal) := by
       rw [TVD_eq_sum_subset_aux, add_self_div_two]
 
-theorem TVD_eq_sum_max {α : Type*} [Fintype α] (p : PMF α) (q : PMF α) :
+lemma TVD_eq_sum_max {α : Type*} [Fintype α] (p : PMF α) (q : PMF α) :
     TVD p q = ∑ a : α, max 0 ((p a).toReal - (q a).toReal) := by
   calc
         TVD p q
@@ -329,7 +337,7 @@ theorem TVD_eq_sum_max {α : Type*} [Fintype α] (p : PMF α) (q : PMF α) :
     _ = ∑ a : α, max 0 ((p a).toReal - (q a).toReal) := by
       simp_rw [max_zero_sub_ite]
 
-theorem TVD_eq_sum_min {α : Type*} [Fintype α] (p : PMF α) (q : PMF α) :
+lemma TVD_eq_sum_min {α : Type*} [Fintype α] (p : PMF α) (q : PMF α) :
     TVD p q = ∑ a : α, ((p a).toReal - min (p a).toReal (q a).toReal) := by
   calc
         TVD p q
@@ -340,7 +348,7 @@ theorem TVD_eq_sum_min {α : Type*} [Fintype α] (p : PMF α) (q : PMF α) :
       intro a ha
       exact max_zero_sub_eq_sub_min (p a).toReal (q a).toReal
 
-theorem TVD_eq_sum_support_max {α : Type*} [Fintype α] (p : PMF α) (q : PMF α) :
+lemma TVD_eq_sum_support_max {α : Type*} [Fintype α] (p : PMF α) (q : PMF α) :
     TVD p q = ∑ a with p a ≠ 0, max 0 ((p a).toReal - (q a).toReal) := by
   calc
         TVD p q
@@ -363,7 +371,7 @@ theorem TVD_eq_sum_support_max {α : Type*} [Fintype α] (p : PMF α) (q : PMF �
           exact max_eq_left_iff.mpr this
         _ = 0 := Finset.sum_const_zero
 
-theorem TVD_eq_sum_support_min {α : Type*} [Fintype α] (p : PMF α) (q : PMF α) :
+lemma TVD_eq_sum_support_min {α : Type*} [Fintype α] (p : PMF α) (q : PMF α) :
     TVD p q = ∑ a with p a ≠ 0, ((p a).toReal - min (p a).toReal (q a).toReal) := by
   calc
         TVD p q
@@ -422,7 +430,6 @@ universe u
 
 variable {α β : Type u} [Fintype α] [Nonempty α]
                         [Fintype β] [Nonempty β]
-
 
 /-- Drawing `a` uniformly from `α` and `b` uniformly from `β`
 and forming the pair `(a, b)` yields the uniform distribution
@@ -483,7 +490,7 @@ section UniformGroup
 
 /-- Applying exponentiation to `x` drawn uniformly at random
 from `ZMod #G` yields the uniform distribution on `G`. -/
-theorem exp_eq_uniform_group {G : Type*} [Group G] [Fintype G]
+lemma exp_eq_uniform_group {G : Type*} [Group G] [Fintype G]
     (g : G) (hg : Group.IsGenerator G g) :
     PMF.map (fun x ↦ g ^ x.val) (uniformZMod (Nat.card G)) = uniformOfFintype G := by
   rw [uniformZMod]
@@ -492,7 +499,7 @@ theorem exp_eq_uniform_group {G : Type*} [Group G] [Fintype G]
 
 /-- Applying exponentiation to `x` drawn uniformly at random
 from `ZMod #G` yields the uniform distribution on `G`. -/
-theorem exp_eq_uniform_group' {G : Type} [Group G] [Fintype G]
+lemma exp_eq_uniform_group' {G : Type} [Group G] [Fintype G]
     (g : G) (hg : Group.IsGenerator G g) :
     (do
       let x ← uniformZMod (Nat.card G)
@@ -502,7 +509,7 @@ theorem exp_eq_uniform_group' {G : Type} [Group G] [Fintype G]
 /-- Applying exponentiation to `x` drawn uniformly at random
 from `ZMod #G` and multiplying by a fixed group element yields
 the uniform distribution on `G`. -/
-theorem exp_mul_eq_uniform_group {G : Type*} [Group G] [Fintype G]
+lemma exp_mul_eq_uniform_group {G : Type*} [Group G] [Fintype G]
     (g m : G) (hg : Group.IsGenerator G g) :
     PMF.map (fun x ↦ g ^ x.val * m) (uniformZMod (Nat.card G)) = uniformOfFintype G := by
   rw [uniformZMod]
@@ -510,8 +517,9 @@ theorem exp_mul_eq_uniform_group {G : Type*} [Group G] [Fintype G]
   exact Group.exp_mul_bijective g m hg
 
 /-- Applying exponentiation to `x` drawn uniformly at random
-from `ZMod #G` yields the uniform distribution on `G`. -/
-theorem exp_mul_eq_uniform_group' {G : Type} [Group G] [Fintype G]
+from `ZMod #G` and multiplying by a fixed group element yields
+the uniform distribution on `G`. -/
+lemma exp_mul_eq_uniform_group' {G : Type} [Group G] [Fintype G]
     (g m : G) (hg : Group.IsGenerator G g) :
     (do
       let x ← uniformZMod (Nat.card G)
