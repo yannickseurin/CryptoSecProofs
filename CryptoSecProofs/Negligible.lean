@@ -25,7 +25,6 @@ def Negligible (f : ℕ → ℝ) :=
 
 /-- The zero function is negligible. -/
 theorem zero_negl : Negligible (fun _ => 0) := by
-  unfold Negligible
   intro c
   use 1
   intro n
@@ -54,14 +53,13 @@ lemma negl_add_aux {f : ℕ → ℝ} (hf : Negligible f) :
   simp only [one_div]
   apply inv_anti₀
   · positivity
-  have : (n : ℝ) ^ (c + 1) = n ^ c * n := rfl
-  rw [this]
-  exact (mul_le_mul_iff_right₀ npowpos).mpr twolen
+  · have : (n : ℝ) ^ (c + 1) = n ^ c * n := rfl
+    rw [this]
+    exact (mul_le_mul_iff_right₀ npowpos).mpr twolen
 
 /-- The sum of two negligible functions is negligible. -/
 theorem negl_add {f g : ℕ → ℝ} (hf : Negligible f) (hg : Negligible g) :
     Negligible (f + g) := by
-  unfold Negligible
   intro c
   rcases negl_add_aux hf c with ⟨n₀, hnf⟩
   rcases negl_add_aux hg c with ⟨n₁, hng⟩
@@ -74,17 +72,15 @@ theorem negl_add {f g : ℕ → ℝ} (hf : Negligible f) (hg : Negligible g) :
       apply add_le_add
       · apply hnf n
         exact le_of_max_le_left hn
-      apply hng n
-      exact le_of_max_le_right hn
+      · apply hng n
+        exact le_of_max_le_right hn
     _ ≤ 1 / n ^ c := by linarith
 
 /-- If a function `f` is asymptotically upper bounded by
 a negligible function `g`, then it is negligible. -/
 theorem negl_of_bounded_negl {f g : ℕ → ℝ} (hg : Negligible g) :
     (∃ n₀, ∀ n, n₀ ≤ n → |f n| ≤ |g n|) → Negligible f := by
-  rintro ⟨n₀, hn₀⟩
-  unfold Negligible
-  intro c
+  rintro ⟨n₀, hn₀⟩ c
   rcases hg c with ⟨n₁, hn₁⟩
   use max n₀ n₁
   intro n hn
@@ -101,8 +97,7 @@ theorem pow_mul_negl {f : ℕ → ℝ} {k : ℕ} (hf : Negligible f) :
     rw [this]
     exact hf
   | succ k ih =>
-    unfold Negligible
-    dsimp
+    dsimp [Negligible]
     intro c
     rcases ih (c + 1) with ⟨n₀, hn₀⟩
     dsimp at hn₀
@@ -118,13 +113,12 @@ theorem pow_mul_negl {f : ℕ → ℝ} {k : ℕ} (hf : Negligible f) :
       _ = |nn * (nn ^ k * f n)| := by rw [mul_assoc]
       _ = |nn| * |nn ^ k * f n| := abs_mul nn (nn ^ k * f n)
       _ = nn * |nn ^ k * f n| := by
-        apply mul_eq_mul_right_iff.mpr
-        left
+        congr
         exact Nat.abs_cast n
       _ ≤ nn * (1 / nn ^ (c + 1)) := by
         apply (mul_le_mul_iff_right₀ _).mpr
         · exact hn₀ n (le_of_max_le_left hn)
-        exact Nat.cast_pos'.mpr npos
+        · exact Nat.cast_pos'.mpr npos
       _ = 1 / nn ^ c := by
         rw [mul_div, mul_one]
         apply (div_eq_div_iff _ _).mpr
@@ -133,9 +127,9 @@ theorem pow_mul_negl {f : ℕ → ℝ} {k : ℕ} (hf : Negligible f) :
         · apply ne_of_gt
           apply pow_pos
           exact Nat.cast_pos'.mpr npos
-        apply ne_of_gt
-        apply pow_pos
-        exact Nat.cast_pos'.mpr npos
+        · apply ne_of_gt
+          apply pow_pos
+          exact Nat.cast_pos'.mpr npos
 
 -- A useful lemma for proving `pow_le_exp`.
 lemma sq_le_two_pow {n : ℕ} (hn : 4 ≤ n) : n ^ 2 ≤ 2 ^ n := by
@@ -175,11 +169,11 @@ lemma pow_le_exp (c : ℕ) :
       apply (mul_le_mul_iff_of_pos_left four_pos).mp
       trans n
       · exact nge'
-      nth_rw 1 [← Nat.div_add_mod n 4, mul_add, mul_one]
-      simp only [add_le_add_iff_left]
-      apply le_of_lt
-      apply Nat.mod_lt
-      linarith
+      · nth_rw 1 [← Nat.div_add_mod n 4, mul_add, mul_one]
+        simp only [add_le_add_iff_left]
+        apply le_of_lt
+        apply Nat.mod_lt
+        linarith
     apply (Nat.pow_le_pow_iff_left two_ne_zero).mp
     calc (n ^ (c + 1)) ^ 2
       _ = n ^ 2 * (n ^ c) ^ 2 := by ring
@@ -195,7 +189,7 @@ lemma pow_le_exp (c : ℕ) :
               apply Nat.mod_lt
               linarith
             _ = 4 * (n / 4 + 1) := by ring
-        positivity
+        · positivity
       _ = n ^ 2 * (4 ^ c * (n / 4 + 1) ^ c) ^ 2 := by rw [mul_pow]
       _ = n ^ 2 * (4 ^ c) ^ 2 * ((n / 4 + 1) ^ c) ^ 2 := by ring
       _ = n ^ 2 * 2 ^ (4 * c) * ((n / 4 + 1) ^ c) ^ 2 := by
@@ -209,7 +203,7 @@ lemma pow_le_exp (c : ℕ) :
       _ ≤ 2 ^ n * (2 ^ (4 * c) * ((n / 4 + 1) ^ c) ^ 2) := by
         apply mul_le_mul_of_nonneg_right
         · exact sq_le_two_pow nge
-        positivity
+        · positivity
       _ ≤ 2 ^ n * (2 ^ (4 * c) * (2 ^ (n / 4 + 1)) ^ 2) := by
         repeat apply Nat.mul_le_mul_left
         apply Nat.pow_le_pow_left
@@ -223,7 +217,7 @@ lemma pow_le_exp (c : ℕ) :
         apply (Nat.le_div_iff_mul_le _).mpr
         · rw [mul_assoc, mul_comm (n / 4) 2, ← mul_assoc]
           simp only [Nat.reduceMul, le_add_iff_nonneg_right, zero_le]
-        norm_num
+        · norm_num
       _ = 2 ^ n * 2 ^ (4 * c + n / 2 + 2) := by ring
       _ ≤ 2 ^ n * 2 ^ n := by
         simp only [Nat.ofNat_pos, pow_pos, mul_le_mul_iff_right₀]
@@ -232,8 +226,7 @@ lemma pow_le_exp (c : ℕ) :
       _ = (2 ^ n) ^ 2 := by ring
 
 theorem inv_exp_negl : Negligible fun n ↦ (1 : ℝ) / 2 ^ n := by
-  unfold Negligible
-  dsimp
+  dsimp [Negligible]
   intro c
   rcases (pow_le_exp c) with ⟨n₀, hn₀⟩
   use max n₀ 1
@@ -242,14 +235,13 @@ theorem inv_exp_negl : Negligible fun n ↦ (1 : ℝ) / 2 ^ n := by
     apply abs_eq_self.mpr
     positivity
   rw [this]
-  repeat
-    rw [one_div]
+  simp only [one_div]
   apply inv_anti₀
   · apply pow_pos
     have : 1 ≤ n := le_of_max_le_right hn
     positivity
-  norm_cast
-  exact hn₀ n (le_of_max_le_left hn)
+  · norm_cast
+    exact hn₀ n (le_of_max_le_left hn)
 
 section Bellare
 
@@ -262,7 +254,7 @@ variable {I : Type*}
 def PointwiseNegligible (F : fun_fam I) : Prop :=
   ∀ i, Negligible (F i)
 
-/-- `F` is uniformly negligible is there exists
+/-- `F` is uniformly negligible if there exists
 a negligible function `δ` such that for all `i`,
 `F i` is eventually less than `δ`. -/
 def UnifNegligible (F : fun_fam I) : Prop :=
@@ -271,7 +263,7 @@ def UnifNegligible (F : fun_fam I) : Prop :=
 /-- Uniform negligibility implies pointwise negligibility. -/
 theorem pw_negl_of_unif_negl (F : fun_fam I) (hF : UnifNegligible F) :
     PointwiseNegligible F := by
-  obtain ⟨f, ⟨hf, h⟩⟩ := hF
+  obtain ⟨f, hf, h⟩ := hF
   intro i
   apply negl_of_bounded_negl hf
   exact h i
@@ -288,7 +280,7 @@ theorem unif_negl_of_pw_negl (F : fun_fam I) (hF : PointwiseNegligible F) :
   -- `F i c ≤ 1 / n ^ c` for all `n ≥ N i c`
   let N (i : I) (c : ℕ) : ℕ :=
     Classical.choose (hF i c)
--- a direct consequence of the definition of `N`
+  -- `hN` is a direct consequence of the definition of `N`
   have hN (i : I) (c : ℕ) : ∀ n, N i c ≤ n → |F i n| ≤ ((n : ℝ) ^ c)⁻¹ := by
     dsimp [N]
     exact Classical.choose_spec (hF i c)
@@ -330,19 +322,19 @@ theorem unif_negl_of_pw_negl (F : fun_fam I) (hF : PointwiseNegligible F) :
           simp
           linarith
         exact Finset.le_max' (S (c + 1)) (N' j (c + 1)) this
-      simp [φ]
+      · simp [φ]
   have hφ' (i : I) (c : ℕ) : s i ≤ c → N i c ≤ φ c := by
     intro si_le_c
     trans N' (s i) c
     · simp [hNN' i]
-    exact hφ c (s i) si_le_c
+    · exact hφ c (s i) si_le_c
   -- All the claims below follow the numeration used in Bellare
   have claim₁ (i : I) (c n : ℕ) : s i ≤ c → φ c ≤ n → |F i n| ≤ ((n : ℝ) ^ c)⁻¹ := by
     intro hi hn
     have : N i c ≤ n := by
       trans φ c
       · exact hφ' i c hi
-      assumption
+      · exact hn
     exact hN i c n this
   have claim₂ (c : ℕ) : φ c < φ (c + 1) := by
     cases c <;> simp [φ]
@@ -354,14 +346,14 @@ theorem unif_negl_of_pw_negl (F : fun_fam I) (hF : PointwiseNegligible F) :
     | succ c ih =>
       trans φ c + 1
       · exact Nat.add_le_add_right ih 1
-      exact Nat.le_max_right ((S (c + 1)).max' (S_ne (c + 1))) (φ c + 1)
+      · exact Nat.le_max_right ((S (c + 1)).max' (S_ne (c + 1))) (φ c + 1)
   have claim₂'' (c d : ℕ) (hcd : c < d) : φ c < φ d := by
     induction d, hcd using Nat.le_induction with
     | base =>
       exact claim₂ c
     | succ d hcd ih =>
       trans φ d
-      · assumption
+      · exact ih
       · exact claim₂ d
   let T (n : ℕ) : Set ℕ := { c | φ c ≤ n}
   -- `T n` is finite (needed to define its max)
@@ -391,8 +383,8 @@ theorem unif_negl_of_pw_negl (F : fun_fam I) (hF : PointwiseNegligible F) :
       Set.mem_setOf_eq, T, T'] at a_mem
     rcases a_mem with h | h
     · linarith
-    contrapose! h
-    exact claim₂'' c a h
+    · contrapose! h
+      exact claim₂'' c a h
   -- define function `γ` as `γ n = max {c : ℕ | φ(c) ≤ n } ∪ { 0 }`
   -- this is function `g` in Bellare's paper
   let γ (n : ℕ) : ℕ := (T' n).max' (T'_ne n)
@@ -402,10 +394,10 @@ theorem unif_negl_of_pw_negl (F : fun_fam I) (hF : PointwiseNegligible F) :
   have claim₃' (n m : ℕ) : n ≤ m → γ n ≤ γ m := by
     apply Nat.le_induction
     · rfl
-    intro m _ ih
-    trans γ m
-    · assumption
-    exact claim₃ m
+    · intro m _ ih
+      trans γ m
+      · exact ih
+      · exact claim₃ m
   have claim₄ (n : ℕ) : N' 0 0 ≤ n → φ (γ n) ≤ n := by
     intro hn
     have : γ n ∈ T' n := by
@@ -415,14 +407,14 @@ theorem unif_negl_of_pw_negl (F : fun_fam I) (hF : PointwiseNegligible F) :
     rcases this with h | h
     · rw [h]
       simpa [φ]
-    assumption
+    · exact h
   have claim₅ (c : ℕ) : γ (φ c) = c := by
     simp only [γ]
     apply Nat.le_antisymm
     · exact Finset.max'_le (T' (φ c)) (T'_ne (φ c)) c (T'_le c)
-    have : c ∈ T' (φ c) := by
-      simp [T, T']
-    exact Finset.le_max' (T' (φ c)) c this
+    · have : c ∈ T' (φ c) := by
+        simp [T, T']
+      exact Finset.le_max' (T' (φ c)) c this
   -- define `U n` as the set of values `F i n`
   -- for `i : I` such that `0 ≤ s i ≤ γ n`
   -- again, we include `0` so that `U n` is non-empty
@@ -446,8 +438,8 @@ theorem unif_negl_of_pw_negl (F : fun_fam I) (hF : PointwiseNegligible F) :
       use s i
       constructor
       · linarith
-      simp only [exists_apply_eq_apply, ↓reduceIte]
-      rw [Function.leftInverse_invFun s_inj i]
+      · simp only [exists_apply_eq_apply, ↓reduceIte]
+        rw [Function.leftInverse_invFun s_inj i]
     simp only [ge_iff_le, δ]
     exact Finset.le_max' (U n) |F i n| this
   -- every function `F i` is eventually less than `δ`
@@ -460,7 +452,7 @@ theorem unif_negl_of_pw_negl (F : fun_fam I) (hF : PointwiseNegligible F) :
       rwa [← claim₅ (s i)]
     trans δ n
     · exact hδ i n this
-    exact le_abs_self (δ n)
+    · exact le_abs_self (δ n)
   -- `δ` is negligible
   have claim₇ : Negligible δ := by
     intro c
@@ -478,28 +470,28 @@ theorem unif_negl_of_pw_negl (F : fun_fam I) (hF : PointwiseNegligible F) :
       rcases hx with h | h
       · rw [h]
         positivity
-      rcases h with ⟨j, j_le, hj⟩
-      rw [← hj]
-      by_cases h' : ∃ i, s i = j
-      · rw [if_pos h']
-        -- now use claim₁ to conclude
-        rcases h' with ⟨i, hij⟩
-        rw [← hij,Function.leftInverse_invFun s_inj i]
-        have : s i ≤ γ n := by
-          linarith
-        exact claim₁ i (γ n) n this n_ge
-      rw [if_neg h']
-      positivity
+      · rcases h with ⟨j, j_le, hj⟩
+        rw [← hj]
+        by_cases h' : ∃ i, s i = j
+        · rw [if_pos h']
+          -- now use claim₁ to conclude
+          rcases h' with ⟨i, hij⟩
+          rw [← hij,Function.leftInverse_invFun s_inj i]
+          have : s i ≤ γ n := by
+            linarith
+          exact claim₁ i (γ n) n this n_ge
+        · rw [if_neg h']
+          positivity
     have c_le : c ≤ γ n := by
       trans γ (φ c)
       · exact le_of_eq (claim₅ c).symm
-      exact claim₃' (φ c) n (le_of_max_le_left (le_of_max_le_left hn))
+      · exact claim₃' (φ c) n (le_of_max_le_left (le_of_max_le_left hn))
     apply inv_anti₀
     · positivity
-    norm_cast
-    apply Nat.pow_le_pow_right
-    · positivity [le_of_max_le_right hn]
-    assumption
+    · norm_cast
+      apply Nat.pow_le_pow_right
+      · positivity [le_of_max_le_right hn]
+      · exact c_le
   -- finally, we have all we need to conclude
   exact ⟨δ, claim₇, claim₆⟩
 
