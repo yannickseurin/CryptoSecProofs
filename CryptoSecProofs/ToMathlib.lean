@@ -62,6 +62,40 @@ lemma max_zero_sub_eq_sub_min {α : Type*}
     max 0 (a - b) = a - min a b :=
   Eq.trans (max_zero_sub_ite a b) (sub_min_ite a b).symm
 
+lemma max_zero_add_max_zero_neg_eq_abs {α : Type*}
+    [AddCommGroup α] [LinearOrder α] [IsOrderedAddMonoid α]
+    (x : α) :
+    max 0 x + max 0 (-x)  = |x| := by
+  by_cases hx : 0 ≤ x
+  · rw [abs_of_nonneg hx, max_eq_right hx]
+    have hnx : -x ≤ 0 := Right.neg_nonpos_iff.mpr hx
+    rw [max_eq_left hnx]
+    simp
+  · have hx' : x < 0 := lt_of_not_ge hx
+    rw [abs_of_neg hx', max_eq_left (le_of_lt hx')]
+    have hnx : 0 ≤ -x := by
+      apply le_of_lt
+      exact Left.neg_pos_iff.mpr hx'
+    rw [max_eq_right hnx]
+    simp
+
+lemma max_zero_sub_max_zero_neg {α : Type*}
+    [AddCommGroup α] [LinearOrder α] [IsOrderedAddMonoid α]
+    (x : α) :
+    max 0 x - max 0 (-x) = x := by
+  by_cases hx : 0 ≤ x
+  · rw [max_eq_right hx]
+    have hnx : -x ≤ 0 := Right.neg_nonpos_iff.mpr hx
+    rw [max_eq_left hnx]
+    simp
+  · have hx' : x < 0 := lt_of_not_ge hx
+    rw [max_eq_left (le_of_lt hx')]
+    have hnx : 0 ≤ -x := by
+      apply le_of_lt
+      exact Left.neg_pos_iff.mpr hx'
+    rw [max_eq_right hnx]
+    simp
+
 end Order
 
 section List
@@ -127,16 +161,58 @@ instance Vector.fintype' [Fintype α] :
     Fintype (Vector α n) :=
   Fintype.ofEquiv (List.Vector α n) equivVector
 
+instance Vector.measurableSpace [MeasurableSpace α] {n : ℕ} :
+    MeasurableSpace (Vector α n) :=
+  MeasurableSpace.comap
+    (fun v : Vector α n => fun i : Fin n => v[i])
+    inferInstance
+
+instance Vector.measurableSingletonClass
+    {α : Type*} [MeasurableSpace α] [MeasurableSingletonClass α] {n : ℕ} :
+    MeasurableSingletonClass (Vector α n) := by
+  constructor
+  intro v
+  rw [MeasurableSpace.measurableSet_comap]
+  refine ⟨{fun i : Fin n => v[i]}, measurableSet_singleton _, ?_⟩
+  ext w
+  simp only [Set.mem_preimage, Set.mem_singleton_iff]
+  constructor
+  · intro h
+    apply Vector.ext
+    intro i hi
+    exact congrFun h ⟨i, hi⟩
+  · intro h
+    subst h
+    rfl
+
+lemma Vector.ne_iff_exists_getElem_ne
+    {α : Type*} {n : ℕ} {u : Vector α n} {v : Vector α n} :
+    u ≠ v ↔ ∃ (i : ℕ) (hi : i < n), u[i] ≠ v[i] := by
+  constructor
+  · intro hne
+    by_contra h
+    simp only [not_exists, not_not] at h
+    apply hne
+    apply Vector.ext
+    intro i hi
+    exact h i hi
+  · intro h
+    by_contra heq
+    obtain ⟨i, hi, huv⟩ := h
+    apply Vector.ext_iff.mp at heq
+    specialize heq i hi
+    tauto
+
 lemma Vector.toFinset_card_eq_of_mem_eq_iff
     {α β : Type*} [DecidableEq α] [DecidableEq β]
     {n : ℕ} {u : Vector α n} {v : Vector β n}
-    (h : ∀ i j : Fin n, u[i] = u[j] ↔ v[i] = v[j]) :
+    (h : ∀ (i j : ℕ) (hi : i < n) (hj : j < n), u[i] = u[j] ↔ v[i] = v[j]) :
     u.toList.toFinset.card = v.toList.toFinset.card := by
   let f : Fin n → α := fun i => u[i]
   let g : Fin n → β := fun i => v[i]
   -- Reformulate hypothesis on `Fin` indices
   have h' : ∀ i j : Fin n, f i = f j ↔ g i = g j := by
-    simpa [f, g]
+    simp [f, g, h]
   -- Identify the `Finset`s as images
   have hu :
       u.toList.toFinset = Finset.univ.image f := by
@@ -170,16 +246,6 @@ lemma Vector.toFinset_card_eq_of_mem_eq_iff
 end Vector
 
 section FinsetSum
-
-lemma Finset.sum_mem_add_sum_compl
-    {ι : Type*} {M : Type*}
-    [AddCommMonoid M] [DecidableEq ι] [Fintype ι]
-    (s : Finset ι) (f : ι → M) :
-    ∑ i : ι, f i = ∑ i ∈ s, f i + ∑ i ∈ sᶜ, f i := by
-  rw [← Finset.sum_ite_mem_eq s f, ← Finset.sum_ite_mem_eq sᶜ f,
-    ← Finset.sum_filter (· ∈ s), ← Finset.sum_filter (· ∈ sᶜ)]
-  simp_rw [mem_compl]
-  rw [Finset.sum_filter_add_sum_filter_not]
 
 lemma Finset.sum_union_le_add_of_nonneg
     {ι : Type u} {N : Type v}
