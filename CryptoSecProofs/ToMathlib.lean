@@ -3,7 +3,10 @@ Copyright (c) 2026 Yannick Seurin. All rights reserved.
 Released under MIT license as described in the file LICENSE.
 Authors: Yannick Seurin
 -/
-import Mathlib.Tactic
+import Mathlib.Analysis.RCLike.Basic
+import Mathlib.Data.Nat.Choose.Cast
+import Mathlib.GroupTheory.SpecificGroups.Cyclic.Basic
+import Mathlib.MeasureTheory.MeasurableSpace.Constructions
 
 /-!
 General lemmas that could be ported to Mathlib, maybe...
