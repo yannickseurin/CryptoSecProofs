@@ -7,6 +7,8 @@ import CryptoSecProofs.HardProblems.CyclicGroups
 import CryptoSecProofs.Cryptosystems.PKE.Defs
 
 /-!
+# ElGamal Public Key Encryption Scheme
+
 The ElGamal public key encryption scheme.
 -/
 
