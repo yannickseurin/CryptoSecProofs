@@ -6,6 +6,15 @@ Authors: Yannick Seurin
 import Mathlib.Probability.Distributions.Uniform
 import CryptoSecProofs.ToMathlib
 
+/-!
+# Probability
+
+This file provides general lemmas about
+probability mass functions. We also provide
+some variants of the monad laws for `PMF`
+that are useful for proofs.
+-/
+
 open ENNReal
 
 /-- For `Fintype` types, we use the discrete σ-algebra for `MeasurableSpace`. -/
@@ -35,7 +44,7 @@ lemma sum_toReal_eq_one {α : Type*} [Fintype α] (p : PMF α) :
 lemma ite_ne_top {α : Type*} (p : PMF α) (a : α) (P : Prop) [Decidable P] :
     (if P then p a else 0) ≠ ⊤ := by
   have ite_le : (if P then p a else 0) ≤  p a := by
-    have : p a = max (p a) 0 := (ENNReal.max_zero_right).symm
+    have : p a = max (p a) 0 := (max_zero (p a)).symm
     nth_rw 2 [this]
     apply ite_le_sup (p a) 0 P
   have : p a ≠ ⊤ := apply_ne_top p a
@@ -322,165 +331,6 @@ lemma bind_pure_bind
   simp [h₁]
 
 end PMFMonadNew
-
--- noncomputable section TVD
-
--- def TVD {α : Type*} [Fintype α] (p q : PMF α) : ℝ :=
---   (∑ a : α, |(p a).toReal - (q a).toReal|) / 2
-
--- lemma TVD_self {α : Type*} [Fintype α] (p : PMF α) :
---     TVD p p = 0 := by
---   simp [TVD]
-
--- lemma TVD_comm {α : Type*} [Fintype α] (p q : PMF α) :
---     TVD p q = TVD q p := by
---   simp [TVD, abs_sub_comm]
-
--- lemma TVD_triangle {α : Type*} [Fintype α] (p q r : PMF α) :
---     TVD p r ≤ TVD p q + TVD q r := by
---   simp only [TVD]
---   calc
---         (∑ a, |(p a).toReal - (r a).toReal|) / 2
---     _ = (∑ a, |(p a).toReal - (q a).toReal + ((q a).toReal - (r a).toReal)|) / 2 := by
---       congr 1
---       apply Finset.sum_congr rfl
---       intro a h
---       congr
---       linarith
---     _ ≤ (∑ a, (|(p a).toReal - (q a).toReal| + |(q a).toReal - (r a).toReal|)) / 2 := by
---       apply (div_le_div_iff_of_pos_right (by norm_num)).mpr
---       apply Finset.sum_le_sum
---       intro a ha
---       exact abs_add_le ((p a).toReal - (q a).toReal) ((q a).toReal - (r a).toReal)
---     _ = (∑ a, |(p a).toReal - (q a).toReal| + ∑ a, |(q a).toReal - (r a).toReal|) / 2 := by
---       apply (div_left_inj' (by norm_num)).mpr
---       exact Finset.sum_add_distrib
---     _ ≤ (∑ a, |(p a).toReal - (q a).toReal|) / 2 + (∑ a, |(q a).toReal - (r a).toReal|) / 2 := by
---       linarith
---     _ = TVD p q + TVD q r := rfl
-
--- lemma TVD_eq_sum_subset_aux {α : Type*} [Fintype α] (p q : PMF α) :
---     ∑ a with ¬(q a).toReal < (p a).toReal, ((q a).toReal - (p a).toReal) =
---       ∑ a with (q a).toReal < (p a).toReal, ((p a).toReal - (q a).toReal) := by
---   apply eq_of_sub_eq_zero
---   simp only [Finset.sum_sub_distrib]
---   rw [sub_sub_sub_eq]
---   simp only [Finset.sum_filter_not_add_sum_filter]
---   simp
-
--- lemma TVD_eq_sum_subset {α : Type*} [Fintype α] (p q : PMF α) :
---     TVD p q = ∑ a with (q a).toReal < (p a).toReal, ((p a).toReal - (q a).toReal) := by
---   calc
---         TVD p q
---     _ = (∑ a : α, |(p a).toReal - (q a).toReal|) / 2 := rfl
---     _ = (∑ a with (q a).toReal < (p a).toReal, |(p a).toReal - (q a).toReal| +
---           ∑ a with ¬((q a).toReal < (p a).toReal), |(p a).toReal - (q a).toReal|) / 2 := by
---       rw [Finset.sum_filter_add_sum_filter_not]
---     -- remove the absolute value in the first sum
---     _ = (∑ a with (q a).toReal < (p a).toReal, ((p a).toReal - (q a).toReal) +
---           ∑ a with ¬((q a).toReal < (p a).toReal), |(p a).toReal - (q a).toReal|) / 2 := by
---       congr 2
---       apply Finset.sum_congr rfl
---       intro a ha
---       simp only [Finset.mem_filter_univ] at ha
---       have hnonneg : 0 ≤ (p a).toReal - (q a).toReal :=
---         sub_nonneg.mpr (le_of_lt ha)
---       simp [abs_of_nonneg hnonneg]
---     -- remove the absolute value in the second sum
---     _ = (∑ a with (q a).toReal < (p a).toReal, ((p a).toReal - (q a).toReal) +
---           ∑ a with ¬((q a).toReal < (p a).toReal), ((q a).toReal - (p a).toReal)) / 2 := by
---       congr 2
---       apply Finset.sum_congr rfl
---       intro a ha
---       simp only [not_lt, Finset.mem_filter_univ] at ha
---       rw [abs_sub_comm]
---       have hnonneg : 0 ≤ (q a).toReal - (p a).toReal :=
---         sub_nonneg.mpr ha
---       simp [abs_of_nonneg hnonneg]
---     _ = ∑ a with (q a).toReal < (p a).toReal, ((p a).toReal - (q a).toReal) := by
---       rw [TVD_eq_sum_subset_aux, add_self_div_two]
-
--- lemma TVD_eq_sum_max {α : Type*} [Fintype α] (p q : PMF α) :
---     TVD p q = ∑ a : α, max 0 ((p a).toReal - (q a).toReal) := by
---   calc
---         TVD p q
---     _ = ∑ a with (q a).toReal < (p a).toReal, ((p a).toReal - (q a).toReal) :=
---       TVD_eq_sum_subset p q
---     _ = ∑ a, if (q a).toReal < (p a).toReal then (p a).toReal - (q a).toReal else 0 :=
---       Finset.sum_filter _ _
---     _ = ∑ a : α, max 0 ((p a).toReal - (q a).toReal) := by
---       simp_rw [max_zero_sub_ite]
-
--- lemma TVD_eq_sum_min {α : Type*} [Fintype α] (p q : PMF α) :
---     TVD p q = ∑ a : α, ((p a).toReal - min (p a).toReal (q a).toReal) := by
---   calc
---         TVD p q
---     _ = ∑ a : α, max 0 ((p a).toReal - (q a).toReal) :=
---       TVD_eq_sum_max p q
---     _ = ∑ a : α, ((p a).toReal - min (p a).toReal (q a).toReal) := by
---       apply Finset.sum_congr rfl
---       intro a ha
---       exact max_zero_sub_eq_sub_min (p a).toReal (q a).toReal
-
--- lemma TVD_eq_sum_support_max {α : Type*} [Fintype α] (p q : PMF α) :
---     TVD p q = ∑ a with p a ≠ 0, max 0 ((p a).toReal - (q a).toReal) := by
---   calc
---         TVD p q
---     _ = ∑ a, max 0 ((p a).toReal - (q a).toReal) := TVD_eq_sum_max p q
---     _ = ∑ a with p a ≠ 0, max 0 ((p a).toReal - (q a).toReal) +
---           ∑ a with p a = 0, max 0 ((p a).toReal - (q a).toReal) := by
---       rw [Finset.sum_filter_not_add_sum_filter]
---     _ = ∑ a with p a ≠ 0, max 0 ((p a).toReal - (q a).toReal) +
---           ∑ a with p a = 0, 0 := by
---       congr 1
---       apply Finset.sum_congr rfl
---       intro a ha
---       simp only [Finset.mem_filter_univ] at ha
---       have : (p a).toReal - (q a).toReal ≤ 0 := by
---         rw [sub_le_iff_le_add, zero_add, ha,]
---         apply (ENNReal.toReal_le_toReal (zero_ne_top) (apply_ne_top q a)).mpr
---         exact zero_le (q a)
---       exact max_eq_left_iff.mpr this
---     _ = ∑ a with p a ≠ 0, max 0 ((p a).toReal - (q a).toReal) := by
---       simp
-
--- lemma TVD_eq_sum_support_min {α : Type*} [Fintype α] (p q : PMF α) :
---     TVD p q = ∑ a with p a ≠ 0, ((p a).toReal - min (p a).toReal (q a).toReal) := by
---   calc
---         TVD p q
---     _ = ∑ a with p a ≠ 0, max 0 ((p a).toReal - (q a).toReal) :=
---       TVD_eq_sum_support_max p q
---     _ = ∑ a with p a ≠ 0, ((p a).toReal - min (p a).toReal (q a).toReal) := by
---       apply Finset.sum_congr rfl
---       intro a ha
---       exact max_zero_sub_eq_sub_min (p a).toReal (q a).toReal
-
--- lemma TVD_map {α β : Type*} [Fintype α] [Fintype β]
---     (p q : PMF α) (f : α → β) :
---     TVD (map f p) (map f q) ≤ TVD p q := by
---   classical
---   rw [TVD_eq_sum_max, TVD_eq_sum_max]
---   calc
---         ∑ b : β, max 0 (((map f p) b).toReal - ((map f q) b).toReal)
---     _ = ∑ b : β, max 0 ((∑ a with f a = b, (p a).toReal) -
---           (∑ a with f a = b, (q a).toReal)) := by
---       simp_rw [map_toReal_fintype]
---     _ ≤ ∑ b : β, ∑ a with f a = b, max 0 ((p a).toReal - (q a).toReal) := by
---       apply Finset.sum_le_sum
---       intro b hb
---       rw [← Finset.sum_sub_distrib]
---       apply max_le
---       · apply Finset.sum_nonneg
---         intro a ha
---         exact le_max_left 0 ((p a).toReal - (q a).toReal)
---       · apply Finset.sum_le_sum
---         intro a ha
---         exact le_max_right 0 ((p a).toReal - (q a).toReal)
---     _ = ∑ a : α, max 0 ((p a).toReal - (q a).toReal) := by
---       exact Finset.sum_fiberwise Finset.univ f
---         (fun a ↦ max 0 ((p a).toReal - (q a).toReal))
-
--- end TVD
 
 noncomputable section UniformDistributions
 
