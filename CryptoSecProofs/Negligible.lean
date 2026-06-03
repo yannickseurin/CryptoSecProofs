@@ -3,8 +3,7 @@ Copyright (c) 2026 Yannick Seurin. All rights reserved.
 Released under MIT license as described in the file LICENSE.
 Authors: Yannick Seurin
 -/
-import Mathlib.Data.Real.Basic
-import Mathlib.Tactic
+import Mathlib.Analysis.RCLike.Basic
 
 /-!
 # Negligible functions
