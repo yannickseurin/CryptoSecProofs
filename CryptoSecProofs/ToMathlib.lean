@@ -237,14 +237,14 @@ lemma Vector.toFinset_card_eq_of_mem_eq_iff
     have h₁ := Classical.choose_spec (Finset.mem_image.mp ha₁)
     have h₂ := Classical.choose_spec (Finset.mem_image.mp ha₂)
     specialize h i₁ i₂
-    aesop
+    grind
   · simp only [Finset.mem_image, Finset.mem_univ, true_and, Fin.getElem_fin, forall_exists_index,
     forall_apply_eq_imp_iff]
     intro i
     use u[i], ⟨i ,rfl⟩
     have hi := Finset.mem_image_of_mem f (Finset.mem_univ i)
     have := Classical.choose_spec (Finset.mem_image.mp hi)
-    aesop
+    grind
 
 end Vector
 

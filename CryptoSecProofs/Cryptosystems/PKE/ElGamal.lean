@@ -72,6 +72,7 @@ lemma enc_dec (g : Generator G) (m : G) (x r : ZMod #G) :
   rw [← pow_mul, ← pow_mul, mul_comm r.val x.val]
   exact mul_inv_cancel_comm (g.val ^ (x.val * r.val)) m
 
+set_option backward.defeqAttrib.useBackward true in
 theorem perfectly_correct : (elgamal G).PerfectlyCorrect := by
   -- don't use `elgamal_decrypt` so that `enc_dec` gets used instead
   simp [-elgamal_decrypt, PKE.PerfectlyCorrect, PKE.correctnessGame, enc_dec]
@@ -136,7 +137,7 @@ lemma game₁_to_ddh₁ : Game₁ adv = ddhGame₁ (ddhReduc adv) := by
   simp only [Game₁, ddhGame₁, ddhReduc, ddhRandomPMF]
   simp_rw [bind_bind', pure_bind']
 
-omit [DecidableEq G] [Fintype G] in
+omit [DecidableEq G] [Fintype G] [IsCyclic G] in
 lemma rewrite_lemma [Finite G] {α : Type} (g mb : G) (p : G → PMF α) :
     (do
       let m ← (do
@@ -148,7 +149,7 @@ lemma rewrite_lemma [Finite G] {α : Type} (g mb : G) (p : G → PMF α) :
       p (g ^ z.val * mb)) := by
   simp
 
-omit [DecidableEq G] [Fintype G] in
+omit [DecidableEq G] [Fintype G] [IsCyclic G] in
 lemma rewrite_lemma' [Finite G] {α : Type} (g : G) (p : G → PMF α) :
     (do
       let m ← (do

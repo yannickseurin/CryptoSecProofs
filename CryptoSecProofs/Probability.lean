@@ -326,8 +326,8 @@ lemma bind_pure_bind
     tauto
   rw [← tsum_univ]
   nth_rw 2 [← tsum_univ]
-  rw [tsum_setElem_eq_tsum_setElem_diff Set.univ s h₀,
-    tsum_setElem_eq_tsum_setElem_diff Set.univ s h₀']
+  rw [tsum_setElem_eq_tsum_setElem_sdiff Set.univ s h₀,
+    tsum_setElem_eq_tsum_setElem_sdiff Set.univ s h₀']
   simp [h₁]
 
 end PMFMonadNew
