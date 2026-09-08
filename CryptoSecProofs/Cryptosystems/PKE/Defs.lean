@@ -11,20 +11,22 @@ import CryptoSecProofs.Probability
 This file gives definitions for PKE schemes.
 -/
 
+universe u
+
 /-- A public key encryption (PKE) scheme.
 We model randomized algorithm as PMFs over their return type. -/
 structure PKE where
   /-- public parameters -/
-  {P : Type*}
+  {P : Type u}
   /-- secret keys -/
-  {SK : Type*}
+  {SK : Type u}
   /-- public keys -/
-  {PK : Type*}
+  {PK : Type u}
   /-- messages -/
-  {M : Type*}
+  {M : Type u}
   [dem : DecidableEq M]
   /-- ciphertexts -/
-  {C : Type*}
+  {C : Type u}
   /-- `setup` takes no input and returns
   public parameters `par` (randomized) -/
   setup : PMF P

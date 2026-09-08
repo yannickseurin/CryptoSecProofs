@@ -359,7 +359,7 @@ theorem unif_negl_of_pw_negl (F : fun_fam I) (hF : PointwiseNegligible F) :
   have T_fin (n : ℕ) : (T n).Finite := by
     have hsubset : T n ⊆ {c | c ≤ n} := by
       intro c hc
-      simp only [T, Set.mem_setOf_eq] at hc ⊢
+      simp only [T, Set.mem_ofPred_eq] at hc ⊢
       exact Nat.le_trans (claim₂' c) hc
     exact (Set.finite_le_nat n).subset hsubset
   -- cast `T n` into a Finset `T' n` to define its max
@@ -379,7 +379,7 @@ theorem unif_negl_of_pw_negl (F : fun_fam I) (hF : PointwiseNegligible F) :
   have T'_le (c : ℕ) : ∀ a ∈ T' (φ c), a ≤ c := by
     intro a a_mem
     simp only [Finset.union_singleton, Finset.mem_insert, Set.Finite.mem_toFinset,
-      Set.mem_setOf_eq, T, T'] at a_mem
+      Set.mem_ofPred_eq, T, T'] at a_mem
     rcases a_mem with h | h
     · linarith
     · contrapose! h
@@ -402,7 +402,7 @@ theorem unif_negl_of_pw_negl (F : fun_fam I) (hF : PointwiseNegligible F) :
     have : γ n ∈ T' n := by
       exact Finset.max'_mem (T' n) (T'_ne n)
     simp only [Finset.union_singleton, Finset.mem_insert, Set.Finite.mem_toFinset,
-      Set.mem_setOf_eq, T, T'] at this
+      Set.mem_ofPred_eq, T, T'] at this
     rcases this with h | h
     · rw [h]
       simpa [φ]

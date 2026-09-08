@@ -311,13 +311,13 @@ lemma bind_pure_bind
   let s : Set α := {a : α | b₀ ≠ f a}
   have h₀ : ∀ a ∈ s, p a * (g a (f a)) x = 0 := by
     intro a
-    simp only [Set.mem_setOf_eq, mul_eq_zero, s]
+    simp only [Set.mem_ofPred_eq, mul_eq_zero, s]
     intro hne
     left
     exact apply_eq_zero_of_map_pure_of_ne p f h hne
   have h₀' : ∀ a ∈ s, p a * (g a b₀) x = 0 := by
     intro a
-    simp only [Set.mem_setOf_eq, mul_eq_zero, s]
+    simp only [Set.mem_ofPred_eq, mul_eq_zero, s]
     intro hne
     left
     exact apply_eq_zero_of_map_pure_of_ne p f h hne
