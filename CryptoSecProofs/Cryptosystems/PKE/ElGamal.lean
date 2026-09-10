@@ -72,10 +72,19 @@ lemma enc_dec (g : Generator G) (m : G) (x r : ZMod #G) :
   rw [← pow_mul, ← pow_mul, mul_comm r.val x.val]
   exact mul_inv_cancel_comm (g.val ^ (x.val * r.val)) m
 
-set_option backward.defeqAttrib.useBackward true in
 theorem perfectly_correct : (elgamal G).PerfectlyCorrect := by
-  -- don't use `elgamal_decrypt` so that `enc_dec` gets used instead
-  simp [-elgamal_decrypt, PKE.PerfectlyCorrect, PKE.correctnessGame, enc_dec]
+  -- Unfold `elgamal` rather than using its `@[simps]` equations: the latter are
+  -- stated at `Generator G`, `G`, … whereas the goal's variables are typed at
+  -- `(elgamal G).P`, `(elgamal G).M`, … so `simp` would have to rewrite the type
+  -- of a bound variable.
+  simp only [PKE.PerfectlyCorrect, PKE.correctnessGame, elgamal]
+  intro m
+  have h : ∀ (g : Generator G) (x r : ZMod #G),
+      (g.val ^ x.val) ^ r.val * m * ((g.val ^ r.val) ^ x.val)⁻¹ = m := by
+    intro g x r
+    rw [← pow_mul, ← pow_mul, mul_comm r.val x.val]
+    exact mul_inv_cancel_comm (g.val ^ (x.val * r.val)) m
+  simp [h]
 
 end Correctness
 
