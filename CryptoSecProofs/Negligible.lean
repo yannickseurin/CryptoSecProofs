@@ -472,14 +472,14 @@ theorem unif_negl_of_pw_negl (F : fun_fam I) (hF : PointwiseNegligible F) :
       · rcases h with ⟨j, j_le, hj⟩
         rw [← hj]
         by_cases h' : ∃ i, s i = j
-        · rw [if_pos h']
+        · rw [ite_eq_left h']
           -- now use claim₁ to conclude
           rcases h' with ⟨i, hij⟩
           rw [← hij,Function.leftInverse_invFun s_inj i]
           have : s i ≤ γ n := by
             linarith
           exact claim₁ i (γ n) n this n_ge
-        · rw [if_neg h']
+        · rw [ite_eq_right h']
           positivity
     have c_le : c ≤ γ n := by
       trans γ (φ c)

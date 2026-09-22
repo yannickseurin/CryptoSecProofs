@@ -183,7 +183,7 @@ lemma ddh_dist_ite (g X Y Z : G) (hg : IsGenerator G g) :
   simp_rw [ddhPMF, bind_apply', pure_apply, uniform_zmod_prob,
     mul_ite, mul_one, mul_zero, ENNReal.tsum_mul_left, ← ENNReal.tsum_prod]
   by_cases h : IsDdh g X Y Z
-  · rw [if_pos h]
+  · rw [ite_eq_left h]
     rw [IsDdh] at h
     rcases h with ⟨x, y, h⟩
     simp_rw [h]
@@ -200,7 +200,7 @@ lemma ddh_dist_ite (g X Y Z : G) (hg : IsGenerator G g) :
         rw [hp]
     simp_rw [this, tsum_ite_eq]
     group
-  · rw [if_neg h]
+  · rw [ite_eq_right h]
     rw [IsDdh] at h
     push Not at h
     simp_rw [h]
@@ -413,9 +413,9 @@ theorem self_reducible (g X Y Z : G) (hg : IsGenerator G g)
     [Fact (Nat.Prime (Nat.card G))] :
     rerandTuple g X Y Z = if IsDdh g X Y Z then ddhPMF g else ddhRandomPMF g := by
   by_cases h : IsDdh g X Y Z
-  · rw [if_pos h]
+  · rw [ite_eq_left h]
     exact rerand_eq_ddhPMF_of_isddh g X Y Z hg h
-  · rw [if_neg h]
+  · rw [ite_eq_right h]
     exact rerand_eq_uniform_of_nonddh g X Y Z hg h
 
 end DDH
