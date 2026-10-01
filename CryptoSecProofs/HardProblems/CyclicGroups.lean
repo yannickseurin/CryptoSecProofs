@@ -70,22 +70,13 @@ local notation "G^4" => G × G × G × G
 def IsDdh (g X Y Z : G) : Prop :=
   ∃ x y : ZMod #G, (X, Y, Z) = (g ^ x.val, g ^ y.val, g ^ (x.val * y.val))
 
-/-- A quadruplet `(g, X, Y, Z)` is a DDH tuple if there exists
-`x` and `y` such that `X = g ^ x`, `Y = g ^ y`, and `Z = g ^  (x * y)`. -/
-def IsDdh' (g X Y Z : G) : Prop :=
-  ∃ x y : ZMod #G, X = g ^ x.val ∧ Y = g ^ y.val ∧ Z = g ^ (x.val * y.val)
-
-lemma is_ddh_iff_is_ddh' (g X Y Z : G) : IsDdh g X Y Z ↔ IsDdh' g X Y Z := by
-  constructor <;> simp [IsDdh, IsDdh']
-
 instance (g X Y Z : G) : Decidable (IsDdh g X Y Z) := by
   exact Classical.propDecidable (IsDdh g X Y Z)
 
 lemma not_is_ddh_iff [Finite G] (g X Y Z : G) (hg : IsGenerator G g) :
     ¬(IsDdh g X Y Z) ↔ ∃ x y z : ZMod #G,
     X = g ^ x.val ∧ Y = g ^ y.val ∧ Z = g ^ z.val ∧ z ≠ x * y := by
-  rw [is_ddh_iff_is_ddh']
-  simp only [IsDdh']
+  simp only [IsDdh, Prod.mk.injEq]
   contrapose!
   constructor
   · intro h
@@ -229,8 +220,9 @@ lemma rerand_eq_ddhPMF_of_isddh (g X Y Z : G) (hg : IsGenerator G g)
     mul_ite, mul_one, mul_zero,
     ENNReal.tsum_mul_left, ← ENNReal.tsum_prod]
   congr
-  rw [is_ddh_iff_is_ddh'] at h
-  rcases h with ⟨x, y, ⟨hx, hy, hz⟩⟩
+  rcases h with ⟨x, y, hxyz⟩
+  simp only [Prod.mk.injEq] at hxyz
+  rcases hxyz with ⟨hx, hy, hz⟩
   -- rewrite the terms inside the if condition
   conv =>
     lhs
