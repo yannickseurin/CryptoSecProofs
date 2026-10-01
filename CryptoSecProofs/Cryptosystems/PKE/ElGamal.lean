@@ -88,7 +88,7 @@ theorem perfectly_correct : (elgamal G).PerfectlyCorrect := by
 
 end Correctness
 
-noncomputable section IND_CPA_Proof
+noncomputable section indCpaProof
 
 variable {G : Type} [Group G] [Fintype G] [IsCyclic G] [DecidableEq G]
          (adv : (elgamal G).indCpaAdversary)
@@ -102,7 +102,7 @@ def ddhReduc (g : Generator G) (X Y Z : G) : PMF Bool := do
   let b' ← adv.A₂ (Y, Z * mb) st
   PMF.pure (if b = b' then true else false)
 
-lemma ind_cpa_to_ddh₀ : PKE.indCpaGame adv = ddhGame₀ (ddhReduc adv) := by
+lemma indCpa_to_ddh₀ : PKE.indCpaGame adv = ddhGame₀ (ddhReduc adv) := by
   simp only [PKE.indCpaGame, ddhGame₀, ddhReduc, ddhPMF, elgamal]
   apply bind_skip'
   intro (g : Generator G)
@@ -223,13 +223,13 @@ lemma game₂_uniform : Game₂ adv = uniformOfFintype Bool := by
     mul_ite, mul_one, mul_zero, tsum_bool]
   cases b <;> cases b' <;> simp
 
-theorem ind_cpa : PKE.indCpaAdvantage adv = ddhAdvantage (ddhReduc adv) := by
+theorem indCpa : PKE.indCpaAdvantage adv = ddhAdvantage (ddhReduc adv) := by
   simp only [PKE.indCpaAdvantage, ddhAdvantage]
   congr
-  · exact ind_cpa_to_ddh₀ adv
+  · exact indCpa_to_ddh₀ adv
   · rw [← game₁_to_ddh₁, game₁_to_game₂, game₂_uniform]
     simp
 
-end IND_CPA_Proof
+end indCpaProof
 
 end elgamal
