@@ -19,7 +19,7 @@ Theorem 3.2 in the paper corresponds to `pointwiseNegligible_iff_unifNegligible`
 
 /-- A function is negligible if it approaches zero
 faster than the inverse of any polynomial. -/
-def Negligible (f : ℕ → ℝ) :=
+def Negligible (f : ℕ → ℝ) : Prop :=
   ∀ c : ℕ, ∃ n₀, ∀ n, n₀ ≤ n → |f n| ≤ 1 / (n ^ c)
 
 /-- The zero function is negligible. -/
@@ -245,7 +245,7 @@ theorem inv_exp_negl : Negligible fun n ↦ (1 : ℝ) / 2 ^ n := by
 section Bellare
 
 /-- A family of functions indexed by `I`. -/
-def fun_fam (I : Type*) := I → ℕ → ℝ
+def fun_fam (I : Type*) : Type _ := I → ℕ → ℝ
 
 variable {I : Type*}
 

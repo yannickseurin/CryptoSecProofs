@@ -406,7 +406,7 @@ instance {G : Type*} [Group G] [IsCyclic G] : CommGroup G := IsCyclic.commGroup
 
 namespace Group
 
-def IsGenerator (G : Type*) [Group G] (g : G) :=
+def IsGenerator (G : Type*) [Group G] (g : G) : Prop :=
   ∀ x : G, x ∈ Subgroup.zpowers g
 
 /-- The subtype of generators of a group `G`.
@@ -416,7 +416,7 @@ generator (something we would not have with a Finset).
 Note: if `g : generator G`, then `g` is actually a pair
 `(g.val, g.property)` where `g.val : G` and `g.property` is a
 proof that `g.val` is a generator of `G`. -/
-def Generator (G : Type*) [Group G] :=
+def Generator (G : Type*) [Group G] : Type _ :=
   { g : G // IsGenerator G g }
 
 noncomputable instance (G : Type*) [Group G] [IsCyclic G] [Fintype G] :
