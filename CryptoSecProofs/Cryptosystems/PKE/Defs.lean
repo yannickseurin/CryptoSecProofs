@@ -3,13 +3,17 @@ Copyright (c) 2026 Yannick Seurin. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Yannick Seurin
 -/
-import CryptoSecProofs.Probability
+module
+
+public import CryptoSecProofs.Probability
 
 /-!
 # Public-Key Encryption Schemes
 
 This file gives definitions for PKE schemes.
 -/
+
+@[expose] public section
 
 universe u
 

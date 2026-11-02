@@ -3,21 +3,25 @@ Copyright (c) 2026 Yannick Seurin. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Yannick Seurin
 -/
-import Mathlib.Analysis.RCLike.Basic
-import Mathlib.Data.Nat.Choose.Cast
-import Mathlib.GroupTheory.SpecificGroups.Cyclic.Basic
-import Mathlib.MeasureTheory.MeasurableSpace.Constructions
+module
+
+public import Mathlib.Analysis.RCLike.Basic
+public import Mathlib.Data.Nat.Choose.Cast
+public import Mathlib.GroupTheory.SpecificGroups.Cyclic.Subgroup
+public import Mathlib.MeasureTheory.MeasurableSpace.Constructions
 
 /-!
 General lemmas that could be ported to Mathlib, maybe...
 -/
 
+@[expose] public section
+
 /- This instance allows to infer `NeZero (Nat.card G)` when working with a `Fintype` group.
 See https://leanprover.zulipchat.com/#narrow/channel/113489-new-members/topic/instance.20synthesis.20failed -/
-instance {α : Type u} [Finite α] [Nonempty α] : NeZero (Nat.card α) where
+instance {α : Type*} [Finite α] [Nonempty α] : NeZero (Nat.card α) where
   out := Nat.card_ne_zero.mpr ⟨inferInstance, inferInstance⟩
 
-lemma two_le_card_of_nontrivial (α : Type) [Fintype α] [Nontrivial α] :
+lemma two_le_card_of_nontrivial (α : Type*) [Fintype α] [Nontrivial α] :
     2 ≤ Fintype.card α := by
   classical
   obtain ⟨a, b, hab⟩ := exists_pair_ne α
@@ -26,7 +30,7 @@ lemma two_le_card_of_nontrivial (α : Type) [Fintype α] [Nontrivial α] :
   simpa [Finset.card_pair, hab] using this
 
 /-- The number of pairs whose left coordinate falls in a given set. -/
-lemma card_pairs_with_fst_mem {α β : Type}
+lemma card_pairs_with_fst_mem {α β : Type*}
     [DecidableEq α] [Fintype α] [Fintype β]
     (s : Finset α) :
     ({ p : α × β | p.1 ∈ s } : Finset (α × β)).card = s.card * Fintype.card β := by
@@ -103,8 +107,9 @@ end Order
 
 section List
 
-lemma List.eraseDups_length_le_aux
-    [DecidableEq α] (l : List α) (h : l.length ≤ q) :
+variable {α : Type*} [DecidableEq α]
+
+lemma List.eraseDups_length_le_aux {q : ℕ} (l : List α) (h : l.length ≤ q) :
     l.eraseDups.length ≤ q := by
   induction q generalizing l with
   | zero =>
@@ -126,13 +131,11 @@ lemma List.eraseDups_length_le_aux
         exact length_filter_le (fun b ↦ !b == a) l
       exact ih _ this
 
-lemma List.eraseDups_length_le
-    [DecidableEq α] (l : List α) :
+lemma List.eraseDups_length_le (l : List α) :
     l.eraseDups.length ≤ l.length := by
   exact List.eraseDups_length_le_aux l (by linarith)
 
-lemma List.dedup_length_le
-    [DecidableEq α] (l : List α) :
+lemma List.dedup_length_le (l : List α) :
     l.dedup.length ≤ l.length := by
   simp [List.dedup_sublist, List.Sublist.length_le]
 

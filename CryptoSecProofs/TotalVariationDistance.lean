@@ -3,7 +3,9 @@ Copyright (c) 2026 Yannick Seurin. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Yannick Seurin
 -/
-import CryptoSecProofs.Probability
+module
+
+public import CryptoSecProofs.Probability
 
 /-!
 # Total Variation Distance
@@ -16,6 +18,8 @@ We use the definition based on the L₁ distance between the two PMFs. The more 
 definition is based on the supremum of the absolute difference of the measures of the two PMFs
 over all (measurable) sets. The two definitions are equivalent as shown in `TVD_eq_sup_abs_sub`.
 -/
+
+@[expose] public section
 
 open ENNReal PMF
 

@@ -3,14 +3,18 @@ Copyright (c) 2026 Yannick Seurin. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Yannick Seurin
 -/
-import CryptoSecProofs.HardProblems.CyclicGroups
-import CryptoSecProofs.Cryptosystems.PKE.Defs
+module
+
+public import CryptoSecProofs.HardProblems.CyclicGroups
+public import CryptoSecProofs.Cryptosystems.PKE.Defs
 
 /-!
 # ElGamal Public Key Encryption Scheme
 
 The ElGamal public key encryption scheme.
 -/
+
+@[expose] public section
 
 open Group PMF
 

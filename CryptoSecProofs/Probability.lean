@@ -3,8 +3,10 @@ Copyright (c) 2026 Yannick Seurin. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Yannick Seurin
 -/
-import Mathlib.Probability.Distributions.Uniform
-import CryptoSecProofs.ToMathlib
+module
+
+public import Mathlib.Probability.ProbabilityMassFunction.Constructions
+public import CryptoSecProofs.ToMathlib
 
 /-!
 # Probability
@@ -14,6 +16,8 @@ probability mass functions. We also provide
 some variants of the monad laws for `PMF`
 that are useful for proofs.
 -/
+
+@[expose] public section
 
 open ENNReal
 
@@ -333,6 +337,60 @@ lemma bind_pure_bind
 end PMFMonadNew
 
 noncomputable section UniformDistributions
+
+section uniformOfFinset
+
+/- Restore definitions for uniform distributions removed by
+[mathlib#42909](https://github.com/leanprover-community/mathlib4/pull/42909)
+Original copyright (c) 2024 Josha Dekker. All rights reserved. -/
+
+/-- Uniform distribution taking the same non-zero probability on the nonempty finset `s` -/
+def uniformOfFinset {α : Type*} (s : Finset α) (hs : s.Nonempty) : PMF α := by
+  classical
+  refine ofFinset (fun a => if a ∈ s then s.card⁻¹ else 0) s ?_ ?_
+  · simp only [Finset.sum_ite_mem, Finset.inter_self, Finset.sum_const, nsmul_eq_mul]
+    have : (s.card : ℝ≥0∞) ≠ 0 := by
+      simpa only [Ne, Nat.cast_eq_zero, Finset.card_eq_zero] using
+        Finset.nonempty_iff_ne_empty.1 hs
+    exact ENNReal.mul_inv_cancel this <| ENNReal.natCast_ne_top s.card
+  · exact fun x hx => by simp only [hx, ite_false]
+
+variable {α : Type*} {s : Finset α} (hs : s.Nonempty) {a : α}
+
+open scoped Classical in
+@[simp]
+theorem uniformOfFinset_apply (a : α) :
+    uniformOfFinset s hs a = if a ∈ s then (s.card : ℝ≥0∞)⁻¹ else 0 :=
+  rfl
+
+theorem uniformOfFinset_apply_of_mem' (ha : a ∈ s) :
+    uniformOfFinset s hs a = (s.card : ℝ≥0∞)⁻¹ := by
+  simp [ha]
+
+theorem uniformOfFinset_apply_of_notMem' (ha : a ∉ s) :
+    uniformOfFinset s hs a = 0 := by
+  simp [ha]
+
+end uniformOfFinset
+
+section uniformOfFintype
+
+/- Restore definitions for uniform distributions removed by
+[mathlib#42909](https://github.com/leanprover-community/mathlib4/pull/42909)
+Original copyright (c) 2024 Josha Dekker. All rights reserved. -/
+
+/-- The uniform pmf taking the same uniform value on all of the fintype `α` -/
+def uniformOfFintype (α : Type*) [Fintype α] [Nonempty α] : PMF α :=
+  uniformOfFinset Finset.univ Finset.univ_nonempty
+
+variable {α : Type*} [Fintype α] [Nonempty α]
+
+@[simp]
+theorem uniformOfFintype_apply (a : α) :
+    uniformOfFintype α a = (Fintype.card α : ℝ≥0∞)⁻¹ := by
+  simp [uniformOfFintype, Finset.mem_univ, uniformOfFinset_apply]
+
+end uniformOfFintype
 
 def uniformZMod (n : ℕ) [NeZero n] : PMF (ZMod n) :=
   uniformOfFintype (ZMod n)

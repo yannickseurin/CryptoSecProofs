@@ -3,7 +3,9 @@ Copyright (c) 2026 Yannick Seurin. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Yannick Seurin
 -/
-import Mathlib.Analysis.RCLike.Basic
+module
+
+public import Mathlib.Analysis.RCLike.Basic
 
 /-!
 # Negligible functions
@@ -16,6 +18,8 @@ by Bellare about two definitions of "negligible"
 for families of functions (see https://eprint.iacr.org/1997/004.pdf).
 Theorem 3.2 in the paper corresponds to `pointwiseNegligible_iff_unifNegligible`.
 -/
+
+@[expose] public section
 
 /-- A function is negligible if it approaches zero
 faster than the inverse of any polynomial. -/

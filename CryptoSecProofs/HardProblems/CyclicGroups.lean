@@ -3,8 +3,10 @@ Copyright (c) 2026 Yannick Seurin. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Yannick Seurin
 -/
-import CryptoSecProofs.Probability
-import Mathlib.Algebra.Field.ZMod
+module
+
+public import CryptoSecProofs.Probability
+public import Mathlib.Algebra.Field.ZMod
 
 /-!
 # Hard problems in cyclic groups
@@ -15,6 +17,8 @@ We define the following hardness assumptions in a finite cyclic group `G`:
 * the Computational Diffie-Hellman (CDH) problem
 * the Decisional Diffie-Hellman (DDH) problem
 -/
+
+@[expose] public section
 
 open Finset Group ENNReal PMF
 
